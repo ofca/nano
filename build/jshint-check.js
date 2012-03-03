@@ -7,7 +7,7 @@ var jshint = require("./lib/jshint").JSHINT,
 			eqnull: true,
 			expr: true,
 			curly: true,
-			trailing: true,
+			trailing: false,
 			undef: true,
 			smarttabs: true,
 			predef: [
