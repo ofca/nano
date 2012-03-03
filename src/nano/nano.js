@@ -109,7 +109,7 @@
 		/**
 		 * Define new class.
 		 * 
-		 *     nano.class('my.new.SillyClass', {
+		 *     nano.define('my.new.SillyClass', {
 		 *         __extend: 'my.old.SillyClass',
 		 *         __mixin: 'nano.util.Observable',
 		 *         __statics: {
@@ -121,7 +121,7 @@
 		 * @param  {Object} o    Class definition
 		 * @return {Object}
 		 */
-		clas: function(name, o) {
+		define: function(name, o) {
 			var me = this,
 				f = function(){ }, cls,
 				parent;
