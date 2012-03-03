@@ -22,6 +22,56 @@
 <span id='nano-util-Template'>	/**
 </span>	 * Javascript micro-templating code is borrowed from Unserscore.js
 	 * 
+	 * Documentation is copied from http://documentcloud.github.com/underscore/#template
+	 * 
+	 * ## nano.util.Template.create(templateString, [context]) 
+	 * 
+	 * Compiles JavaScript templates into functions that can be evaluated for rendering. 
+	 * Useful for rendering complicated bits of HTML from JSON data sources. Template 
+	 * functions can both interpolate variables, using &lt;%= … %&gt;, as well as execute 
+	 * arbitrary JavaScript code, with &lt;% … %&gt;. If you wish to interpolate a value, 
+	 * and have it be HTML-escaped, use &lt;%- … %&gt; When you evaluate a template function, 
+	 * pass in a context object that has properties corresponding to the template's 
+	 * free variables. If you're writing a one-off, you can pass the context object 
+	 * as the second parameter to template in order to render immediately instead of 
+	 * returning a template function.
+	 * 
+	 *     var compiled = nano.util.Template.create(&quot;hello: &lt;%= name %&gt;&quot;);
+	 *     compiled({name : 'moe'});
+	 *     =&gt; &quot;hello: moe&quot;
+	 * 
+	 *     var list = &quot;hello: &lt;%= name %&gt;&quot;;
+	 *     nano.util.Template.create(list, {people : ['moe', 'curly', 'larry']});
+	 *     =&gt; &quot;hello: moe&quot;
+	 * 
+	 *     var template = nano.util.Template.create(&quot;&lt;b&gt;&lt;%- value %&gt;&lt;/b&gt;&quot;);
+	 *     template({value : '&lt;script&gt;'});
+	 *     =&gt; &quot;&lt;b&gt;&amp;lt;script&amp;gt;&lt;/b&gt;&quot;
+	 *     
+	 * You can also use print from within JavaScript code. This is sometimes more 
+	 * convenient than using &lt;%= ... %&gt;.
+	 * 
+	 *     var compiled = nano.util.Template.create(&quot;&lt;% print('Hello ' + epithet); %&gt;&quot;);
+	 *     compiled({epithet: &quot;stooge&quot;});
+	 *     =&gt; &quot;Hello stooge.&quot;
+	 *     
+	 * If ERB-style delimiters aren't your cup of tea, you can change Underscore's 
+	 * template settings to use different symbols to set off interpolated code. 
+	 * Define an interpolate regex to match expressions that should be interpolated 
+	 * verbatim, an escape regex to match expressions that should be inserted after 
+	 * being HTML escaped, and an evaluate regex to match expressions that should be 
+	 * evaluated without insertion into the resulting string. You may define or 
+	 * omit any combination of the three. For example, to perform Mustache.js style 
+	 * templating:
+	 * 
+	 *     nano.util.Template.templateSettings = {
+	 *         interpolate : /\{\{(.+?)\}\}/g
+	 *     };
+	 * 
+	 *     var template = nano.util.Template.create(&quot;Hello {{ name }}!&quot;);
+	 *     template({name : &quot;Mustache&quot;});
+	 *     =&gt; &quot;Hello Mustache!&quot;
+	 * 
 	 * @class nano.util.Template
 	 * @type {Object}
 	 * @singleton
@@ -43,14 +93,23 @@
 		unescape: function(code) {
 			return code.replace(/\\\\/g, '\\').replace(/\\'/g, &quot;'&quot;);
 		},
-<span id='nano-util-Template-method-get'>		/**
+<span id='nano-util-Template-method-create'>		/**
 </span>		 * Return template.
+		 * 
+		 *     @example
+		 *     var body = document.getElementsByTagName('body')[0];
+		 *     
+		 *     var template = nano.util.Template.create('&lt;span&gt;&lt;%=name%&gt;&lt;/span&gt;');
+		 *     body.innerHTML = template({name: 'Tom'});
+		 *     
+		 *     body.innerHTML = nano.util.Template.create('&lt;span&gt;&lt;%=name%&gt;&lt;/span&gt;', {name: 'Tom'});
+		 * 
 		 * @param  {String} str  Template string.
 		 * @param  {Object} data Data passed to template.
 		 * @return {Function}
 		 */
-		get: function(str, data) {
-			var me = nano.util.template,
+		create: function(str, data) {
+			var me = nano.util.Template,
 				c  = me.templateSettings;
 
 			var tmpl = 

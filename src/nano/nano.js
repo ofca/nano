@@ -1,12 +1,16 @@
-(function(){
+(function(global){
 
 	'use strict';
 
-	// Root object ('window' in the browser)
-	var root = this;
-
-	root.nano = {
-		global: root,
+	/**
+	 * nano core.
+	 * 
+	 * @class nano
+	 * @type {Object}
+	 * @singleton
+	 */
+	global.nano = {
+		global: global,
 		classCache: {},
 		/**
 		 * Base function.
@@ -46,8 +50,6 @@
 		}, // eo extend
 		/**
 		 * Create namespaces.
-		 * 
-		 * @return {Void}
 		 */
 		namespace: function() {
 			var root = window,
@@ -123,7 +125,7 @@
 		 */
 		define: function(name, o) {
 			var me = this,
-				f = function(){ }, cls,
+				F = function(){ }, Cls,
 				parent;
 			
 			// Class parent	
@@ -137,36 +139,36 @@
 			// Custom constructor not defined
 			if (o.constructor == Object.prototype.constructor) {
 				// Default constructor
-				cls = function() {
+				Cls = function() {
 					// Call parent constructor
 					this.__superclass.apply(this, arguments);
 				};
 			} else {
 				// Constructor defined by user
-				cls = function() { o.constructor.apply(this, arguments); };
+				Cls = function() { o.constructor.apply(this, arguments); };
 			}
 
-			f.prototype = parent.prototype;
-			cls.prototype = new f();
+			F.prototype = parent.prototype;
+			Cls.prototype = new F();
 			
 			// Apply statics from parent
-			me.extend(cls, parent);
+			me.extend(Cls, parent);
 
 			// Apply statics from class definition
 			if (o.__statics) {
-				me.extend(cls, o.__statics);
+				me.extend(Cls, o.__statics);
 				delete o.__statics;
 			}
 
 			// Apply user methods to prototype
-			me.extend(cls.prototype, o);
+			me.extend(Cls.prototype, o);
 
 			// Override construtctor
-			cls.prototype.constructor = cls;
-			cls.prototype.__className = name;
-			cls.prototype.__superclass = parent;
+			Cls.prototype.constructor = Cls;
+			Cls.prototype.__className = name;
+			Cls.prototype.__superclass = parent;
 
-			cls.prototype.__mixin = [];
+			Cls.prototype.__mixin = [];
 
 			if (o.__mixin) {
 				var mixin = o.__mixin,
@@ -201,11 +203,11 @@
 			}
 
 			for (alias in mixins) {
-				me.mixin(cls, alias, mixins[alias].cls, mixins[alias].methods);
+				me.mixin(Cls, alias, mixins[alias].cls, mixins[alias].methods);
 		        }
 	        }
 			
-			me.setNamespace(name, o.__singleton ? new cls() : cls);
+			me.setNamespace(name, o.__singleton ? new Cls() : Cls);
 		},
 		mixin: function(cls, alias, mixin, methods) {
 			cls = cls.prototype;
@@ -228,13 +230,9 @@
 			cls.__mixin[alias] = mixin;
 		}, // eo mixin
 		/**
-		 * Alias method for nano.util.template.
-		 * 
-		 * @param  {String} str   Template string.
-		 * @param  {Object} data Data passed to template.
-		 * @return {String}
+		 * @inheritDoc nano.util.Template#create
 		 */
-		template: function(str, data) { return this.util.template.get(str, data); },
+		template: function(str, data) { return this.util.template.create(str, data); },
 		/**
 		 * Escape a string for HTML interpolation.
 		 * 
@@ -245,4 +243,4 @@
 			return (''+string).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/\//g,'&#x2F;');
 		} // eo escape
 	};
-})();
+})( (function() { return this; }).call() );

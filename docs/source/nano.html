@@ -250,13 +250,9 @@
 			cls.__mixin[alias] = mixin;
 		}, // eo mixin
 <span id='Base-method-template'>		/**
-</span>		 * Alias method for nano.util.template.
-		 * 
-		 * @param  {String} str   Template string.
-		 * @param  {Object} data Data passed to template.
-		 * @return {String}
+</span>		 * @inheritDoc nano.util.Template#create
 		 */
-		template: function(str, data) { return this.util.template.get(str, data); },
+		template: function(str, data) { return this.util.template.create(str, data); },
 <span id='Base-method-escape'>		/**
 </span>		 * Escape a string for HTML interpolation.
 		 * 

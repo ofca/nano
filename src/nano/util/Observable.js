@@ -1,8 +1,19 @@
 (function(nano){
 	nano.namespace('nano.util');
 
-	nano.class('nano.util.Observable', {
+	/**
+	 * Base class for events functionality.
+	 * 
+	 * @class nano.util.Observable
+	 */
+	nano.define('nano.util.Observable', {
 		events: {},
+		/**
+		 * Adds event.
+		 * 
+		 * @param {String} name Event name.
+		 * @return {nano.util.Observable}
+		 */
 		addEvent: function(name) {
 			var i = arguments.length;
 			
@@ -11,13 +22,34 @@
 					this.events[arguments[i]] = [];
 				}
 			}
-		},
+
+			return this;
+		}, // eo addEvent
 		/**
 		 * Adds listener to event.
 		 * 
+		 *     this.addListener('eventName', function(){}, this, {});
+		 * 
 		 * @param {String}   e  Event name.
 		 * @param {Function} fn Function to call on event fire.
-		 * @param {Object}   o  Additional options passed to event.
+		 * @param {Object} [scope=Object which fire the event] The scope in which the handler function is executed.
+		 * @param {Object} [o]  Additional options passed to event.
+		 * 
+		 * Additional configuration:
+		 * 
+		 * - **scope** : Object 
+		 *
+		 *   The scope in which the handler function is executed.
+		 *
+		 * - **args** : Array 
+		 *
+		 *   Arguments passed to function.
+		 *
+		 * - **single** : Boolean 
+		 *
+		 *   Call listener only once, and remove them.
+		 *
+		 * @return {nano.util.Observable}
 		 */
 		addListener: function(e, fn, scope, o) {
 			o = nano.extend({}, o || {}, {
@@ -32,6 +64,8 @@
 					o: o
 				});
 			}
+
+			return this;
 		}, // eo addListener
 		fireEvent: function(name, args, delayed) {
 			var me = this,
