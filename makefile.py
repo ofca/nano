@@ -7,7 +7,7 @@ if not os.path.exists('dist'):
 # nano source files
 files = [
 	'nano.js',
-	'util/template.js',
+	'util/Template.js',
 	'util/Observable.js'
 ]
 
