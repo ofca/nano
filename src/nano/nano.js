@@ -1,5 +1,7 @@
 (function(){
 
+	'use strict';
+
 	// Root object ('window' in the browser)
 	var root = this;
 
@@ -13,14 +15,14 @@
 		/**
 		 * Creates clone of object.
 		 * 
-		 * 		var o = {},
-		 * 			c = { car: 'red' },
-		 * 			defaults = { car: 'black', speed: 2 };
-		 * 			
-		 * 		nano.extend(o, c, defaults);
-		 * 		
-		 * 		// Result
-		 * 		{ car: 'red', speed: 2 }
+		 *     var o = {},
+		 *         c = { car: 'red' },
+		 *         defaults = { car: 'black', speed: 2 };
+		 *     
+		 *      nano.extend(o, c, defaults);
+		 * 
+		 *      // Result
+		 *      { car: 'red', speed: 2 }
 		 * 
 		 * @param  {Object} o        
 		 * @param  {Object} c        
@@ -28,9 +30,11 @@
 		 * @return {Object}
 		 */
 		extend: function(o, c, defaults) {
+			var me = this;
+
 			// Apply defaults first
 			if (defaults) {
-				nano.extend(o, defaults);   
+				me.extend(o, defaults);   
 			}
 
 			// Copy keys & values to o
@@ -105,27 +109,28 @@
 		/**
 		 * Define new class.
 		 * 
-		 * 		nano.class('my.new.SillyClass', {
-		 * 			__extend: 'my.old.SillyClass',
-		 * 			__mixin: 'nano.util.Observable',
-		 * 			__statics: {
-		 * 				instance: true
-		 * 			}
-		 * 		});
+		 *     nano.class('my.new.SillyClass', {
+		 *         __extend: 'my.old.SillyClass',
+		 *         __mixin: 'nano.util.Observable',
+		 *         __statics: {
+		 *             instance: true
+		 *         }
+		 *     });
 		 * 
 		 * @param  {String} name Class name
 		 * @param  {Object} o    Class definition
 		 * @return {Object}
 		 */
-		class: function(name, o) {
-			var f = function(){ }, cls,
+		clas: function(name, o) {
+			var me = this,
+				f = function(){ }, cls,
 				parent;
 			
 			// Class parent	
 			if (o.__extend) {						
-				parent = typeof o.__extend == 'String' ? nano.getNamespace(o.__extend) : o.__extend;
+				parent = typeof o.__extend == 'String' ? me.getNamespace(o.__extend) : o.__extend;
 			} else {
-				parent = nano.Base;
+				parent = me.Base;
 				o.__extend = 'nano.Base';
 			}
 
@@ -145,16 +150,16 @@
 			cls.prototype = new f();
 			
 			// Apply statics from parent
-			nano.extend(cls, parent);
+			me.extend(cls, parent);
 
 			// Apply statics from class definition
 			if (o.__statics) {
-				nano.extend(cls, o.__statics);
+				me.extend(cls, o.__statics);
 				delete o.__statics;
 			}
 
 			// Apply user methods to prototype
-			nano.extend(cls.prototype, o);
+			me.extend(cls.prototype, o);
 
 			// Override construtctor
 			cls.prototype.constructor = cls;
@@ -164,47 +169,50 @@
 			cls.prototype.__mixin = [];
 
 			if (o.__mixin) {
-				var mixin = o.__mixin;
-				delete o.__mixin, mixins = {};
+				var mixin = o.__mixin,
+					mixins = {},
+					alias;
+				delete o.__mixin;
 
 				// __mixin: 'some.Class'
 				if (typeof mixin == 'string') {
-					var alias = mixin.split('.');
+					alias = mixin.split('.');
 					alias = alias[alias.length-1];
 
-					mixins[alias] = { cls: nano.getNamespace(mixin), methods: true };
+					mixins[alias] = { cls: me.getNamespace(mixin), methods: true };
 				} else {
 
 					var item;
 
-		        	for (alias in mixin) {
-		        		item = mixin[alias];
+					for (alias in mixin) {
+						item = mixin[alias];
 
-		        		if (typeof item == 'string') {
-		        			// Class to mixin
-		        			mixins[name] = { cls: nano.getNamespace(item), methods: true };
-		        		} else {
-		        			mixins[name] = { cls: nano.getNamespace(item.cls) };
+						if (typeof item == 'string') {
+							// Class to mixin
+							mixins[name] = { cls: me.getNamespace(item), methods: true };
+						} else {
+							mixins[name] = { cls: me.getNamespace(item.cls) };
 
-		        			if (item.methods != undefined) {
-		        				mixins[name].methods = item.methods;
-		        			}
-		        		}
-		        	}
-		        }
+						if (item.methods !== undefined) {
+							mixins[name].methods = item.methods;
+						}
+					}
+				}
+			}
 
-		        for (alias in mixins) {
-		        	nano.mixin(cls, alias, mixins[alias].cls, mixins[alias].methods);
+			for (alias in mixins) {
+				me.mixin(cls, alias, mixins[alias].cls, mixins[alias].methods);
 		        }
 	        }
 			
-			nano.setNamespace(name, o.__singleton ? new cls : cls);
+			me.setNamespace(name, o.__singleton ? new cls() : cls);
 		},
 		mixin: function(cls, alias, mixin, methods) {
-			var cls = cls.prototype,
-				mixin = mixin.prototype,
-				methods = methods == true ? [] : methods,
-				all = methods.length == 0,
+			cls = cls.prototype;
+			mixin = mixin.prototype;
+			methods = methods === true ? [] : methods;
+			
+			var	all = methods.length === 0,
 				i;
 
 			for (i in mixin) {
@@ -226,7 +234,7 @@
 		 * @param  {Object} data Data passed to template.
 		 * @return {String}
 		 */
-		template: function(str, data) { return nano.util.template.get(str, data); },
+		template: function(str, data) { return this.util.template.get(str, data); },
 		/**
 		 * Escape a string for HTML interpolation.
 		 * 
@@ -237,141 +245,4 @@
 			return (''+string).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/\//g,'&#x2F;');
 		} // eo escape
 	};
-
-	nano.namespace('nano.util');
-
-	/**
-	 * Javascript micro-templating code is borrowed from Unserscore.js
-	 */
-	// JavaScript micro-templating, similar to John Resig's implementation.
-	// Underscore templating handles arbitrary delimiters, preserves whitespace,
-	// and correctly escapes quotes within interpolated code.
-	nano.util.template = {
-		// By default, Underscore uses ERB-style template delimiters, change the
-		// following template settings to use alternative delimiters.
-		templateSettings: {
-			evaluate    : /<%([\s\S]+?)%>/g,
-			interpolate : /<%=([\s\S]+?)%>/g,
-			escape      : /<%-([\s\S]+?)%>/g
-		},
-		// When customizing `templateSettings`, if you don't want to define an
-		// interpolation, evaluation or escaping regex, we need one that is
-		// guaranteed not to match.
-		noMatch: /.^/,
-		// Within an interpolation, evaluation, or escaping, remove HTML escaping
-		// that had been previously added.
-		unescape: function(code) {
-			return code.replace(/\\\\/g, '\\').replace(/\\'/g, "'");
-		},
-		get: function(str, data) {
-			var me = nano.util.template,
-				c  = me.templateSettings;
-
-			var tmpl = 
-				'var __p=[],print=function(){__p.push.apply(__p,arguments);};' +
-				'with(obj||{}){__p.push(\'' +
-				str.replace(/\\/g, '\\\\')
-					.replace(/'/g, "\\'")
-					.replace(c.escape || me.noMatch, function(match, code) {
-						return "',nano.escape(" + me.unescape(code) + "),'";
-					})
-					.replace(c.interpolate || me.noMatch, function(match, code) {
-						return "'," + me.unescape(code) + ",'";
-					})
-					.replace(c.evaluate || me.noMatch, function(match, code) {
-						return "');" + me.unescape(code).replace(/[\r\n\t]/g, ' ') + ";__p.push('";
-					})
-					.replace(/\r/g, '\\r')
-					.replace(/\n/g, '\\n')
-					.replace(/\t/g, '\\t')
-					+ "');}return __p.join('');";
-			
-			var func = new Function('obj', 'nano', tmpl);
-			if (data) return func(data, nano);
-			return function(data) {
-				return func.call(this, data, nano);
-			};
-		}
-	};
-
-	nano.class('nano.util.Observable', {
-		events: {},
-		addEvent: function(name) {
-			var i = arguments.length;
-			
-			while (i--) {
-				if (this.events[arguments[i]] == undefined) {
-					this.events[arguments[i]] = [];
-				}
-			}
-		},
-		/**
-		 * Adds listener to event.
-		 * 
-		 * @param {String}   e  Event name.
-		 * @param {Function} fn Function to call on event fire.
-		 * @param {Object}   o  Additional options passed to event.
-		 */
-		addListener: function(e, fn, scope, o) {
-			o = nano.extend({}, o || {}, {
-				args: [],
-				single: false,
-				scope: scope || null		
-			});
-
-			if (this.events[e]) {
-				this.events[e].push({
-					fn: fn,
-					o: o
-				});
-			}
-		}, // eo addListener
-		fireEvent: function(name, args, delayed) {
-			var me = this,
-				e = this.events[name];
-
-			if ( ! e || e.length == 0) {
-				return true;
-			}
-
-			delayed = delayed === undefined ? true : delayed;
-
-			if (delayed !== true) {
-				setTimeout(function() { me.fireEvent(name, true); }, delayed);
-				return true;
-			}
-
-			var args = args || [],
-				i = 0, len = e.length, item, result, o, remove = [], tmp = [],
-				returnTrue = true;
-
-			for (; i < len, item = e[i]; i++) {
-				o = item.o;
-
-				result = item.fn.apply(o.scope || this, args.concat(o.args));
-
-				if (o.single) {
-					remove.push(i);
-				}
-
-				if (result === false) {
-					returnFalse = false;
-					break;
-				}
-			}
-
-			if (remove.length > 0) {
-				for (i = 0; i < len; i++) {
-					if (remove.indexOf(i) == -1) {
-						tmp.push(e[i]);
-					}
-				}
-
-				me.events[name] = tmp;
-			}
-
-			return returnTrue;
-		} // eo fireEvent
-	}); // eo nano.util.Observable
-
 })();
