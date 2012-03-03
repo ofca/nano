@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">(function(nano){
+
+	nano.namespace('nano.util');
+
+<span id='nano-util-Template'>	/**
+</span>	 * Javascript micro-templating code is borrowed from Unserscore.js
+	 * 
+	 * @class nano.util.Template
+	 * @type {Object}
+	 * @singleton
+	 */
+	nano.util.Template = {
+		// By default, Underscore uses ERB-style template delimiters, change the
+		// following template settings to use alternative delimiters.
+		templateSettings: {
+			evaluate    : /&lt;%([\s\S]+?)%&gt;/g,
+			interpolate : /&lt;%=([\s\S]+?)%&gt;/g,
+			escape      : /&lt;%-([\s\S]+?)%&gt;/g
+		},
+		// When customizing `templateSettings`, if you don't want to define an
+		// interpolation, evaluation or escaping regex, we need one that is
+		// guaranteed not to match.
+		noMatch: /.^/,
+		// Within an interpolation, evaluation, or escaping, remove HTML escaping
+		// that had been previously added.
+		unescape: function(code) {
+			return code.replace(/\\\\/g, '\\').replace(/\\'/g, &quot;'&quot;);
+		},
+<span id='nano-util-Template-method-get'>		/**
+</span>		 * Return template.
+		 * @param  {String} str  Template string.
+		 * @param  {Object} data Data passed to template.
+		 * @return {Function}
+		 */
+		get: function(str, data) {
+			var me = nano.util.template,
+				c  = me.templateSettings;
+
+			var tmpl = 
+				'var __p=[],print=function(){__p.push.apply(__p,arguments);};' +
+				'with(obj||{}){__p.push(\'' +
+				str.replace(/\\/g, '\\\\')
+					.replace(/'/g, &quot;\\'&quot;)
+					.replace(c.escape || me.noMatch, function(match, code) {
+						return &quot;',nano.escape(&quot; + me.unescape(code) + &quot;),'&quot;;
+					})
+					.replace(c.interpolate || me.noMatch, function(match, code) {
+						return &quot;',&quot; + me.unescape(code) + &quot;,'&quot;;
+					})
+					.replace(c.evaluate || me.noMatch, function(match, code) {
+						return &quot;');&quot; + me.unescape(code).replace(/[\r\n\t]/g, ' ') + &quot;;__p.push('&quot;;
+					})
+					.replace(/\r/g, '\\r')
+					.replace(/\n/g, '\\n')
+					.replace(/\t/g, '\\t')
+					+ &quot;');}return __p.join('');&quot;;
+			
+			var func = new Function('obj', 'nano', tmpl);
+			if (data) return func(data, nano);
+			return function(data) {
+				return func.call(this, data, nano);
+			};
+		}
+	};
+})(nano);
+</pre>
+</body>
+</html>
