@@ -11,6 +11,7 @@ files = [
 	'util/Observable.js'
 ]
 
+# Merge all files
 content = ''
 
 for file in files:
@@ -18,12 +19,10 @@ for file in files:
 
 open('dist/nano.js', 'wb').write(content)
 
-#jsengine = 'nodejs'
+# jshint
+out = commands.getoutput('nodejs build/jshint-check.js')
 
-#out = commands.getoutput(jsengine+' build/jshint-check.js')
+print out
 
-#print out
-
-
-
+# compile using clousure compiler
 os.system('java -jar build/compiler.jar --js src/nano/nano.js --js_output_file dist/nano.min.js')
