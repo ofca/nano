@@ -15,12 +15,9 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">(function(){
+  <pre class="prettyprint lang-js">(function(global){
 
 	'use strict';
-
-	// Root object ('window' in the browser)
-	var root = this;
 
 <span id='nano'>	/**
 </span>	 * nano core.
@@ -29,8 +26,8 @@
 	 * @type {Object}
 	 * @singleton
 	 */
-	root.nano = {
-		global: root,
+	global.nano = {
+		global: global,
 		classCache: {},
 <span id='Base'>		/**
 </span>		 * Base function.
@@ -72,11 +69,11 @@
 </span>		 * Create namespaces.
 		 */
 		namespace: function() {
-			var root = window,
+			var root = this.global,
 				i, len, ns, j, sublen, part;
 
 			for (i = 0, len = arguments.length; i &lt; len; i++) {
-				root = window;
+				root = this.global;
 				ns = arguments[i].split('.');
 
 				for (j = 0, sublen = ns.length; j &lt; sublen; j++) {
@@ -91,7 +88,7 @@
 			}
 		}, // eo namespace
 		setNamespace: function(name, value) {
-			var root = window,
+			var root = this.global,
 				ns = name.split('.'),
 				len = ns.length - 1,
 				last = ns[len],
@@ -110,7 +107,7 @@
 			return root[last] = value;
 		}, // eo setNamespace
 		getNamespace: function(name) {
-			var root = window,
+			var root = this.global,
 				ns = name.split('.'),
 				len = ns.length - 1,
 				last = ns[len],
@@ -131,70 +128,96 @@
 <span id='Base-method-define'>		/**
 </span>		 * Define new class.
 		 * 
+		 *     @example
 		 *     nano.define('my.new.SillyClass', {
-		 *         __extend: 'my.old.SillyClass',
-		 *         __mixin: 'nano.util.Observable',
-		 *         __statics: {
+		 *         extend: 'my.old.SillyClass',
+		 *         mixin: 'nano.util.Observable',
+		 *         statics: {
 		 *             instance: true
 		 *         }
 		 *     });
+		 *
+		 * ## Mixins
 		 * 
+		 *     @example
+		 *     // This will mixin all functions from SomeClass
+		 *     nano.define('TestClass', {
+		 *         mixin: 'some.namespace.SomeClass',
+		 *         constructor: function() {
+		 *             // Call mixed class contructor
+		 *             this.mixins.SomeClass.constructor.call(this);
+		 *         }
+		 *     });
+		 *     
+		 *     // This will mix only two methods: 'foo' and 'bar'
+		 *     nano.define('TestClass', {
+		 *         mixin: {
+		 *             'SomeClass': { 
+		 *                 cls: 'some.namespace.SomeClass',
+		 *                 methods: ['foo', 'bar'] 
+		 *             }
+		 *         },
+		 *         hello: function() {
+		 *             this.foo();
+		 *         }
+		 *     });
+		 *   
 		 * @param  {String} name Class name
 		 * @param  {Object} o    Class definition
 		 * @return {Object}
 		 */
 		define: function(name, o) {
 			var me = this,
-				f = function(){ }, cls,
+				F = function(){ }, Cls,
 				parent;
 			
 			// Class parent	
-			if (o.__extend) {						
-				parent = typeof o.__extend == 'String' ? me.getNamespace(o.__extend) : o.__extend;
+			if (o.extend) {						
+				parent = typeof o.extend == 'string' ? me.getNamespace(o.extend) : o.extend;
 			} else {
 				parent = me.Base;
-				o.__extend = 'nano.Base';
+				o.extend = 'nano.Base';
 			}
 
 			// Custom constructor not defined
 			if (o.constructor == Object.prototype.constructor) {
 				// Default constructor
-				cls = function() {
+				Cls = function() {
 					// Call parent constructor
-					this.__superclass.apply(this, arguments);
+					this.superclass.constructor.apply(this, arguments);
 				};
 			} else {
 				// Constructor defined by user
-				cls = function() { o.constructor.apply(this, arguments); };
+				Cls = function() { o.constructor.apply(this, arguments); };
 			}
 
-			f.prototype = parent.prototype;
-			cls.prototype = new f();
+			F.prototype = parent.prototype;
+			Cls.prototype = new F();
 			
 			// Apply statics from parent
-			me.extend(cls, parent);
+			me.extend(Cls, parent);
 
 			// Apply statics from class definition
-			if (o.__statics) {
-				me.extend(cls, o.__statics);
-				delete o.__statics;
+			if (o.statics) {
+				me.extend(Cls, o.statics);
+				delete o.statics;
 			}
 
 			// Apply user methods to prototype
-			me.extend(cls.prototype, o);
+			me.extend(Cls.prototype, o);
 
 			// Override construtctor
-			cls.prototype.constructor = cls;
-			cls.prototype.__className = name;
-			cls.prototype.__superclass = parent;
+			Cls.prototype.constructor = Cls;
+			Cls.prototype.className = name;
+			Cls.prototype.superclass = parent;
 
-			cls.prototype.__mixin = [];
+			Cls.prototype.mixin = [];
 
-			if (o.__mixin) {
-				var mixin = o.__mixin,
+			if (o.mixin) {
+				var mixin = o.mixin,
 					mixins = {},
 					alias;
-				delete o.__mixin;
+				delete o.mixin;
 
 				// __mixin: 'some.Class'
 				if (typeof mixin == 'string') {
@@ -223,11 +246,11 @@
 			}
 
 			for (alias in mixins) {
-				me.mixin(cls, alias, mixins[alias].cls, mixins[alias].methods);
+				me.mixin(Cls, alias, mixins[alias].cls, mixins[alias].methods);
 		        }
 	        }
 			
-			me.setNamespace(name, o.__singleton ? new cls() : cls);
+			me.setNamespace(name, o.singleton ? new Cls() : Cls);
 		},
 		mixin: function(cls, alias, mixin, methods) {
 			cls = cls.prototype;
@@ -247,7 +270,7 @@
 				} 
 			}
 
-			cls.__mixin[alias] = mixin;
+			cls.mixin[alias] = mixin;
 		}, // eo mixin
 <span id='Base-method-template'>		/**
 </span>		 * @inheritDoc nano.util.Template#create
@@ -263,6 +286,6 @@
 			return (''+string).replace(/&amp;/g, '&amp;amp;').replace(/&lt;/g, '&amp;lt;').replace(/&gt;/g, '&amp;gt;').replace(/&quot;/g, '&amp;quot;').replace(/'/g, '&amp;#x27;').replace(/\//g,'&amp;#x2F;');
 		} // eo escape
 	};
-})();</pre>
+})( (function() { return this; }).call() );</pre>
 </body>
 </html>

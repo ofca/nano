@@ -15,7 +15,9 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">(function(nano){
+  <pre class="prettyprint lang-js">(function(global){
+
+	var nano = global.nano;
 
 	nano.namespace('nano.util');
 
@@ -128,17 +130,20 @@
 					})
 					.replace(/\r/g, '\\r')
 					.replace(/\n/g, '\\n')
-					.replace(/\t/g, '\\t')
-					+ &quot;');}return __p.join('');&quot;;
+					.replace(/\t/g, '\\t') + &quot;');}return __p.join('');&quot;;
 			
 			var func = new Function('obj', 'nano', tmpl);
-			if (data) return func(data, nano);
+			
+			if (data) {
+				return func(data, nano);
+			}
+
 			return function(data) {
 				return func.call(this, data, nano);
 			};
 		}
 	};
-})(nano);
+})( (function() { return this; }).call() );
 </pre>
 </body>
 </html>
