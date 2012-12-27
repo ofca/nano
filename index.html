@@ -1,33 +1,58 @@
+<!doctype html>
 <html>
-<head>
-	<title></title>
-	<script type='text/javascript' src='js/nano.js'></script>
-	<script type='text/javascript'>
-		nano.class('My.Test', {
-			param: function() {
-				console.log('param');
-			},
-			ciut: function() {}
-		});
+    <head>
+    	<title></title>
+        
+    </head>
+    <body>
+        <script src='vendor/underscore-min.js'></script>
+        <script type='text/javascript' src='src/nano/nano.js'></script>
+        <script type='text/javascript'>
 
-		nano.class('My.Upa', {
-			__singleton: true,
-			__mixin: { 
-				'test': { cls: 'My.Test', methods: ['param'] }
-			},
-			constructor: function() {
-				console.log('upda');
-				this.__superclass.prototype.constructor(this, arguments);
-			},
-			action: function() {
-				console.log('action');
-			}
-		});
+            nano.define('Foo', {
+                test: function() {}
+            });
 
-		console.log(nano.template('this is tmpl <%=s%>')({s: 'c'}));
-	</script>
-</head>
-<body>
+            nano.define('TestClass', {
+                $extend: 'Foo',
+                $statics: {
+                    instance: null
+                },
+                hello: function() {
 
-</body>
+                }
+            });
+new TestClass;
+           /* nano.class('My.Test', {
+                param: function() {
+                    console.log('param');
+                },
+                ciut: function() {}
+            });
+
+            nano.class('My.Upa', {
+                __singleton: true,
+                __mixin: { 
+                    'test': { cls: 'My.Test', methods: ['param'] }
+                },
+                constructor: function() {
+                    console.log('upda');
+                    this.__superclass.prototype.constructor(this, arguments);
+                },
+                action: function() {
+                    console.log('action');
+                }
+            });
+
+            console.log(nano.template('this is tmpl <%=s%>')({s: 'c'}));
+
+            nano.setRootNamespace(root);
+
+            nano.namespace('this.is.foo', root);
+
+            nano.myNamespace(root);
+
+            root.namespace('this.is.foo', value);*/
+        </script>
+    </body>
 </html>
