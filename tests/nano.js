@@ -161,112 +161,103 @@
         ok(nano.scope.Bar.prototype.unbind === undefined, 'Single method mixin ok.');
     });
 
-   //test('nano.define')
+    module('Class inheritance');
 
-    /*module('Inheritance');
-    test('nano.define - Extending class', function() {
-        //expect(8);
-
-        // Defining class
-        nano.define('TestClass', {
-            foo: function() {
-                console.log('foo called!');
-            }
-        });
-
-        ok(typeof TestClass == 'function', 'TestClass defined.');
-
-        var test = new TestClass();
-
-        ok(test instanceof nano.Base, 'Created instance of TestClass is instance of nano.Base.');
-        ok(test instanceof TestClass, 'Created instance of TestClass is instance of TestClass.');
-
-        // Extending
-        nano.define('ChildClass', {
-            $extend: 'TestClass',
-            bar: function() {
-                console.log('bar called!');
-            }
-        });
-
-        ok(typeof ChildClass == 'function', 'ChildClass defined.');
-
-        var child = new ChildClass();
-
-        ok(child instanceof nano.Base, 'Created instance of ChildClass is instance of nano.Base.');
-        ok(child instanceof TestClass, 'Created instance of ChildClass is instance of TestClass.');
-        ok(child instanceof ChildClass, 'Created instance of ChildClass is instance of ChildClass.');
-        equal(child instanceof Array, false, 'Created instance of ChildClass is not instance of Array.');
-
-        nano.define('Bar', {
-            constructor: function() {
-                console.log('Hi');
-            }
-        });
+    test('nano.define: Extend class - basic', function() {
+        createScope();
 
         nano.define('Foo', {
+            bar: function() { return 'bar'; }
+        });
+
+        nano.define('Bar', {
+            $extend: 'Foo'
+        });
+
+        var bar = new nano.scope.Bar();
+
+        ok(bar instanceof nano.scope.Bar, 'Class instantiated successfully.');
+        ok(bar instanceof nano.Base, 'Class extends nano.Base.');
+        ok(bar instanceof nano.scope.Foo, 'Class extends parent.');
+        equal(bar instanceof Array, false, 'Class not extends Array.');
+        ok(typeof nano.scope.Bar.prototype.bar === 'function', 'Parent methods exists in child.');
+        ok(bar.bar() === 'bar', 'Inherited method successfully executed.');
+    });
+
+    test('nano.define: Extend class - advanced', function() {
+        createScope();
+
+        nano.define('Foo', {
+            foo: function() { return 'foo'; }
+        });
+
+        nano.define('Bar', {
+            $extend: 'Foo',
+            bar: function() { return 'bar'; }
+        });
+
+        nano.define('Rab', {
             $extend: 'Bar',
+            rab: function() { return 'rab'; }
+        });
+
+        var rab = new nano.scope.Rab();
+
+        ok(rab instanceof nano.scope.Rab, 'Class instantiated successfully.');
+        ok(rab instanceof nano.Base, 'Class extends nano.Base.');
+        ok(rab instanceof nano.scope.Foo, 'Class extends grant parent.');
+        ok(rab instanceof nano.scope.Bar, 'Class extends parent.');
+        equal(rab instanceof Array, false, 'Class not extends Array.');
+        ok(typeof nano.scope.Rab.prototype.foo === 'function', 'Grant parent methods exists in child.');
+        ok(typeof nano.scope.Rab.prototype.bar === 'function', 'Parent methods exists in child.');
+        ok(rab.bar() === 'bar', 'Inherited method successfully executed.');
+    });
+
+    test('nano.define: Extend class - overload constructor', function() {
+        createScope();
+
+        nano.define('Foo', {
+            constructor: function() {
+                this.a = 'a';
+            }
+        });
+
+        nano.define('Bar', {
+            $extend: 'Foo',
+            constructor: function() {
+                this.a = 'b';
+            }
+        });
+
+        var foo = new nano.scope.Foo();
+        var bar = new nano.scope.Bar();
+
+        ok(foo.a === 'a', 'Parent constructor is ok.');
+        ok(bar.a === 'b', 'Child constructor successful overload parent constructor.');        
+    });
+
+    test('nano.define: Extend class - overload constructor and call parent constructor', function() {
+        createScope();
+
+        nano.define('Foo', {
+            constructor: function() {
+                this.a = 'a';
+            }
+        });
+
+        nano.define('Bar', {
+            $extend: 'Foo',
             constructor: function() {
                 this.$super.prototype.constructor.apply(this, arguments);
-                console.log('Hello!');
+                this.b = 'b';
             }
         });
 
-        ok(typeof Foo == 'function', 'Foo class with custom constructor defined.');
+        var foo = new nano.scope.Foo();
+        var bar = new nano.scope.Bar();
 
-        var foo = new Foo();
-        var bar = new Bar();
-
-        ok(foo instanceof Foo, 'foo instantiated.');
+        ok(foo.a === 'a', 'Parent constructor is ok.');
+        ok(bar.a === 'a', 'Child constructor successfully executed parent constructor.');
+        ok(bar.b === 'b', 'Child constructor successfully executed.');
     });
-
-    test('nano.define - Statics', function() {
-
-        expect(2);
-
-        // Defining class
-        nano.define('TestClass', {
-            statics: {
-                hello: function() {
-                    return 'hello!';
-                },
-                instance: 1
-            },
-            foo: function() {
-                console.log('foo called!');
-            }
-        });
-
-        var test = new TestClass();
-
-        ok(typeof TestClass.hello == 'function' && TestClass.hello() == 'hello!', 'Statics works.');
-        ok(test.hello === undefined, 'Statics works.');
-
-    });
-
-    test('nano.define - Mixins', function() {
-
-        expect(1);
-
-        // Defining class
-        nano.define('TestClass', {
-            foo: function() {
-                console.log('foo called!');
-            }
-        });
-
-        // Second class
-        nano.define('SecondClass', {
-            mixin: 'TestClass',
-            bar: function() {
-                console.log('bar called!');
-            }
-        });
-
-        var test = new TestClass(),
-            second = new SecondClass();
-
-        ok(typeof second.foo === 'function', 'Mixin full class.');
-
-    });*/
 })(this, [][0]);
