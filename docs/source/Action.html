@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">(function(nano, _) {
+
+    &quot;use strict&quot;
+    
+<span id='nano-ui-grid-column-Action'>    /**
+</span>     * Column provide functionality for grid row menus.
+     *
+     * @class    nano.ui.grid.column.Action
+     * @author   ofca &lt;ofca@emve.org&gt;
+     * @extends  nano.ui.grid.Column
+     */
+    nano.define('nano.ui.grid.column.Action', {        
+        $extend: 'nano.ui.grid.Column',
+        constructor: function(o) {
+            var items = this.items = [];
+
+            if (o.items) {
+                items = o.items;
+                delete o.items;
+            }
+
+            this.$super.prototype.constructor.call(this, o);
+
+            this.addItems(items);
+        },
+        addItems: function(o) {
+            _.map(o, this.addItem, this);
+        },
+        addItem: function(o) {
+            var me = this;
+
+            o = _.defaults(o, {
+                icon: null,
+                tooltip: '',
+                handler: function() {},
+                id: _.uniqueId()
+            });
+
+            this.items.push(o);
+
+            this.grid.addAction('.cell-action-'+o.id+':click', function(el, e) {
+                o.handler.call(me.grid, el, parseInt(el.parentNode.getAttribute('data-rowindex')), e);
+            });
+        },
+        renderCell: function(val, data, columnIndex, rowIndex) {
+            var html = '&lt;td class=&quot;action&quot; data-rowindex=&quot;'+rowIndex+'&quot;&gt;';
+
+            if (this.items.length) {
+                var i = 0, 
+                    items = this.items, 
+                    len = items.length, item;
+
+                for (; i &lt; len; i++) {
+                    item = items[i];
+                    html += '&lt;a class=&quot;btn btn-small cell-action-'+item.id+'&quot;&gt;';
+
+                    if (item.icon) {
+                        html += '&lt;i class=&quot;icon-minus-sign&quot;&gt;&lt;/i&gt;';
+                    }
+
+                    html += '&lt;/a&gt;';
+                }
+            }
+
+            html += '&lt;/td&gt;';
+
+            return html;
+        }
+    });
+
+})(this.nano, this._);</pre>
+</body>
+</html>

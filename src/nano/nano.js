@@ -2,8 +2,42 @@
 
 	'use strict';
 
+
+
+    /**
+     * Base class.
+     * 
+     * @class nano.Base
+     * @extends Object
+     */
+
     function hasOwnProperty(obj, name) {
         return Object.prototype.hasOwnProperty.call(obj, name);
+    };
+
+    var Base = function(o) {
+        o = o || {};
+        this.$setProperties();
+        this.$applyConfigs(o);
+    };
+    Base.prototype.$setProperties = function() { return _.extend(this, this.$properties && this.$properties()); };
+    Base.prototype.$applyConfigs = function(o) {
+        var key, setter;
+
+        for (key in o) {
+            setter = 'set' + nano.string.ucfirst(key);
+            if (typeof this[setter] == 'function') {
+                this[setter].call(this, o[key]);
+                delete o[key];
+            } else {
+                if (typeof this[key] != 'function') {
+                    this[key] = o[key];
+                    delete o[key];
+                }
+            }
+        }
+
+        return this;
     };
 
 	/**
@@ -14,9 +48,26 @@
 	 * @singleton
 	 */
 	var nano = {
-		scope: root,
-        Base: function() {},
-		classCache: {},
+		scope: root,        
+        Base: Base,
+        /**
+         * Template function. It use _.template method but
+         * with Twig syntax, so instead of:
+         * * <% %> is {% %}
+         * * <%= %> is {{ }}
+         * * <%- %> is {{- }}
+         * 
+         * @param  {String} text
+         * @param  {Object} data
+         * @return {String/Function}
+         */
+		tmpl: function(text, data) {
+            return _.template(text, data, {
+                evaluate    : /\{\%([\s\S]+?)\%\}/g,
+                interpolate : /\{\{([\s\S]+?)\}\}/g,
+                escape      : /\{\{\-([\s\S]+?)\}\}/g
+            });
+        },
 		/**
 		 * Create namespace.
          *
@@ -35,10 +86,10 @@
          *     // Multiple namespaces can be created too...
          *     nano.namespace(['foo.bar', object], ['bar.foo', root]);
          *
-         * @param {string} namespace Namespace name.
-         * @param {object} root Base object.
-         * @param {mixed} value Optional. Value to set.
-         * @return {mixed} Newly created namespace.
+         * @param {String} namespace Namespace name.
+         * @param {Object} root Base object.
+         * @param {Mixed} value Optional. Value to set.
+         * @return {Mixed} Newly created namespace.
 		 */
 		namespace: function(namespace, value) {
 
@@ -159,7 +210,7 @@
 				};
 			} else {
 				// Constructor defined by user
-				cls = api.constructor;
+				cls = function() { api.constructor.apply(this, arguments); };
 			}
 
             // Create dummy function to not execute

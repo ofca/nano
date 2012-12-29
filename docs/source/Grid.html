@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">(function(root, nano, _, $) {
+
+    &quot;use strict&quot;
+
+<span id='nano-ui-Grid'>    /**
+</span>     * Grid component.
+     *
+     * @class    nano.ui.Grid
+     * @extends  nano.Base
+     * @author   ofca &lt;ofca@emve.org&gt;
+     */
+    nano.define('nano.ui.Grid', {
+<span id='nano-ui-Grid-method-constructor'>        /**
+</span>         * Constructor.
+         *
+         *     @example
+         *     var grid = new nano.ui.Grid({
+         *         appendTo: 'grid'
+         *     });
+         * 
+         * @param  {Object} o Configuration.
+         * @constructor
+         */
+        constructor: function(o) {
+            o = o || {};
+
+            _.extend(this, {
+<span id='nano-ui-Grid-cfg-template'>                /**
+</span>                 * @cfg {String} template
+                 * Grid html template.
+                 */
+                template: '&lt;table class=&quot;{{css}}&quot;&gt;&lt;/table&gt;',
+<span id='nano-ui-Grid-cfg-columns'>                /**                 
+</span>                 * @cfg {Array} columns 
+                 * Grid columns definition.
+                 */
+                columns: [],
+<span id='nano-ui-Grid-cfg-data'>                /**
+</span>                 * @cfg {Array} data
+                 * Data to display.
+                 */
+                data: [],
+<span id='nano-ui-Grid-cfg-appendTo'>                /**
+</span>                 * @cfg {HTMLElement/String} appendTo
+                 * DOMElement to render grid.
+                 */
+                appendTo: null,
+<span id='nano-ui-Grid-cfg-css'>                /**
+</span>                 * @cfg {Array} css
+                 * Css classes applied to table dom element.
+                 */
+                css: ['table'],
+<span id='nano-ui-Grid-property-dom'>                /**
+</span>                 * @property {Object} dom 
+                 * Handles link to HTMLElements.
+                 * @property {Object} dom.table Handler to table HTMLElement. Available after nano.ui.Grid.render() executed.
+                 * @readonly
+                 */
+                dom: {}
+            });
+
+            if (o.renderTo) {
+                this.setRenderTo(o.renderTo);
+                delete o.renderTo;
+            }
+
+            if (o.columns) {
+                this.setColumns(o.columns);
+                delete o.columns;
+            }
+
+            if (o.on) {
+                this.addActions(o.on);
+                delete o.on;
+            }
+
+            _.extend(this, o);
+        },
+        addActions: function(o) {
+            _.map(o, function(v, k) { this.addAction(k, v); }, this); 
+        },
+        addAction: function(path, handler) {
+            path = path.split(':');
+
+            var me = this, 
+                action = path[1],
+                selectors = path[0];
+
+            $(this.renderTo).on(action, selectors, function(e) {
+                handler.call(me, this, e);
+            });
+        },
+        setRenderTo: function(value) {
+            if (typeof value == 'string') {
+                value = document.getElementById(value);
+            }
+
+            if ( ! value) {
+                throw new Error('nano.ui.Grid: Specified dom element does not exists.');
+            }
+
+            this.renderTo = value;
+        },
+        setColumn: function(o) {
+            var type = o.type || 'string';
+    
+            // Capitalize first char
+            type = type.charAt(0).toUpperCase() + type.slice(1);
+
+            if ( ! nano.ui.grid.column[type]) {
+                throw new Error('nano.ui.Grid: Column ' + type + ' does not exists');
+            }
+
+            o.grid = this;
+
+            this.columns.push( new nano.ui.grid.column[type](o) );
+        },
+        setColumns: function(columns) {
+            var i = 0, len = columns.length;
+
+            for (; i &lt; len; i++) {
+                this.setColumn(columns[i]);
+            }
+        },
+        render: function() {
+            this.renderTo.innerHTML = nano.tmpl(this.template, {
+                css: this.css.join(' ')
+            });
+
+            this.dom.table = this.renderTo.getElementsByTagName('table')[0];
+            this.renderHeaders();
+            this.renderRows();
+        },
+        renderHeaders: function() {
+            var html = [],
+                cols = this.columns,
+                len = cols.length, i = 0, col,
+                table = this.dom.table, thead, el;
+
+            for (; i &lt; len; i++) {
+                col = cols[i];
+
+                if ( ! col.isVisible()) {
+                    continue;
+                }
+
+                html[i] = col.renderHeaderCell();
+            }
+
+            el = document.createElement('thead');
+            el.innerHTML = '&lt;tr&gt;' + html.join('') + '&lt;/tr&gt;';
+
+            thead = table.getElementsByTagName('thead')[0];
+
+            // thead exists, replace it
+            if (thead) {
+                table.replaceChild(el, thead);
+            } else {
+                // Insert as first child in any other 
+                // node exists in the table
+                table.firstChild 
+                    ? table.insertBefore(el, table.firstChild)
+                    : table.appendChild(el);
+            }
+        },
+        renderRows: function() {
+            var me = this,
+                data = me.data,
+                len = data.length,
+                i = 0,
+                html = [], 
+                table = this.dom.table,
+                tbody, thead, el;
+
+            for (; i &lt; len; i++) {
+                html[i] = me.renderRow(data[i], i);
+            }
+
+            // Create dom element
+            el = document.createElement('tbody');
+            el.innerHTML = html.join('');
+
+            // Get tbody
+            tbody = table.getElementsByTagName('tbody')[0];
+
+            // If exists replace with new one
+            if (tbody) {
+                table.replaceChild(el, tbody);
+            } else {
+                thead = table.getElementsByTagName('thead')[0];
+
+                // If thead exists insert after it
+                if (thead) {
+                    table.insertBefore(el, thead.nextSibling);
+                } else {
+                    // Insert as first child in any other 
+                    // node exists in the table
+                    table.firstChild
+                        ? table.insertBefore(el, table.firstChild)
+                        : table.appendChild(el)
+                }
+            }
+        },
+        renderRow: function(data, rowIndex) {
+            var html = [], 
+                cols = this.columns, 
+                i = 0, 
+                len = cols.length, col;
+
+            for (; i &lt; len; i++) {
+                col = cols[i];
+
+                if ( ! col.isVisible()) {
+                    continue;
+                }
+
+                html[i] = col.renderCell(col.virtual ? null : data[col.index], data, i, rowIndex);
+            }
+
+            return '&lt;tr&gt;' + html.join('') + '&lt;/tr&gt;';
+        },
+        getColumn: function(index) {
+            var i = 0, list = this.columns, len = list.length;
+
+            for (; i &lt; len; i++) {
+                if (list[i]['index'] == index) return list[i];
+            }
+        },
+<span id='nano-ui-Grid-method-sortBy'>        /**
+</span>         * Sort grid by column.
+         * 
+         * @param  {String} column Column index.
+         * @param  {Function} func Optional. Sorting function.
+         * @return {nano.ui.Grid} this
+         * @chainable
+         * @method
+         */
+        sortBy: function(column, func) {
+            this.data = this.getColumn(column).sort(func);
+            this.renderRows();
+        }
+    });
+
+})(this, this.nano, this._, this.jQuery);</pre>
+</body>
+</html>

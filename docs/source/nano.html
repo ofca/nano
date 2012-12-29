@@ -15,9 +15,20 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">(function(global){
+  <pre class="prettyprint lang-js">(function(root, _, undefined){
 
 	'use strict';
+
+<span id='nano-Base'>    /**
+</span>     * Base class.
+     * 
+     * @class nano.Base
+     * @extends Object
+     */
+
+    function hasOwnProperty(obj, name) {
+        return Object.prototype.hasOwnProperty.call(obj, name);
+    };
 
 <span id='nano'>	/**
 </span>	 * nano core.
@@ -26,106 +37,92 @@
 	 * @type {Object}
 	 * @singleton
 	 */
-	global.nano = {
-		global: global,
-		classCache: {},
-<span id='Base'>		/**
-</span>		 * Base function.
+	var nano = {
+		scope: root,        
+        Base: function() {},
+<span id='nano-method-tmpl'>        /**
+</span>         * Template function. It use _.template method but
+         * with Twig syntax, so instead of:
+         * * &lt;% %&gt; is {% %}
+         * * &lt;%= %&gt; is {{ }}
+         * * &lt;%- %&gt; is {{- }}
+         * 
+         * @param  {String} text
+         * @param  {Object} data
+         * @return {String/Function}
+         */
+		tmpl: function(text, data) {
+            return _.template(text, data, {
+                evaluate    : /\{\%([\s\S]+?)\%\}/g,
+                interpolate : /\{\{([\s\S]+?)\}\}/g,
+                escape      : /\{\{\-([\s\S]+?)\}\}/g
+            });
+        },
+<span id='nano-method-namespace'>		/**
+</span>		 * Create namespace.
+         *
+         * If namespace exists, it will be just returned.
+         * 
+         * NOTE: If value is provided and namespace already exists it will be overwrited!
+         * 
+         * @example
+         *     // Create namespace on _nano_'s root object 
+         *     // (it's _window_ in browser)
+         *     nano.namespace('foo.bar');
+         *
+         *     // Creates window.foo.bar with value 'hello'
+         *     nano.namespace('foo.bar', undefined, 'hello');
+         *
+         *     // Multiple namespaces can be created too...
+         *     nano.namespace(['foo.bar', object], ['bar.foo', root]);
+         *
+         * @param {String} namespace Namespace name.
+         * @param {Object} root Base object.
+         * @param {Mixed} value Optional. Value to set.
+         * @return {Mixed} Newly created namespace.
 		 */
-		Base: function(){},
-<span id='Base-method-extend'>		/**
-</span>		 * Creates clone of object.
-		 * 
-		 *     var o = {},
-		 *         c = { car: 'red' },
-		 *         defaults = { car: 'black', speed: 2 };
-		 *     
-		 *      nano.extend(o, c, defaults);
-		 * 
-		 *      // Result
-		 *      { car: 'red', speed: 2 }
-		 * 
-		 * @param  {Object} o        
-		 * @param  {Object} c        
-		 * @param  {Object} defaults Default values.
-		 * @return {Object}
-		 */
-		extend: function(o, c, defaults) {
-			var me = this;
+		namespace: function(namespace, value) {
 
-			// Apply defaults first
-			if (defaults) {
-				me.extend(o, defaults);   
-			}
+            var root = nano.scope;
 
-			// Copy keys &amp; values to o
-			for (var p in c) {
-				o[p] = c[p];
-			}
+            if (_.isArray(namespace)) {
+                root = namespace[0];
+                namespace = namespace[1];
+            }
 
-			return o;
-		}, // eo extend
-<span id='Base-method-namespace'>		/**
-</span>		 * Create namespaces.
-		 */
-		namespace: function() {
-			var root = this.global,
-				i, len, ns, j, sublen, part;
+			var ns = namespace.split('.'),
+                len = ns.length,
+                lastIdx = len - 1,
+                last = ns[lastIdx],
+                part, i = 0;
 
-			for (i = 0, len = arguments.length; i &lt; len; i++) {
-				root = this.global;
-				ns = arguments[i].split('.');
+            for (; i &lt; len; i++) {
+                part = ns[i];
 
-				for (j = 0, sublen = ns.length; j &lt; sublen; j++) {
-					part = ns[j];
+                // Last element
+                if (lastIdx == i) {
+                    // Namespace not exists, so create it always
+                    if ( ! root[part]) {
+                        root[part] = value || {};
+                    } else {
+                        // Namespace exists, so create it only
+                        // if value is provided
+                        if (value) {
+                            root[part] = value;
+                        }
+                    }
+                } else {
+                    if ( ! root[part]) {
+                        root[part] = {};                    
+                    }
+                }
 
-					if ( ! root[part]) {
-						root[part] = {};
-					}
+                root = root[part];
+            }
 
-					root = root[part];
-				}				
-			}
+            return root;
 		}, // eo namespace
-		setNamespace: function(name, value) {
-			var root = this.global,
-				ns = name.split('.'),
-				len = ns.length - 1,
-				last = ns[len],
-				i, part;
-
-			for (i = 0; i &lt; len; i++) {
-				part = ns[i];
-
-				if ( ! root[part]) {
-					root[part] = {};
-				}
-
-				root = root[part];
-			}
-			
-			return root[last] = value;
-		}, // eo setNamespace
-		getNamespace: function(name) {
-			var root = this.global,
-				ns = name.split('.'),
-				len = ns.length - 1,
-				last = ns[len],
-				i, part;
-
-			for (i = 0; i &lt; len; i++) {
-				part = ns[i];
-
-				if ( ! root[part]) {
-					root[part] = {};
-				}
-
-				root = root[part];
-			}
-			
-			return root[last];
-		}, // eo getNamespace
-<span id='Base-method-define'>		/**
+<span id='nano-method-define'>		/**
 </span>		 * Define new class.
 		 * 
 		 *     @example
@@ -166,98 +163,105 @@
 		 * @param  {Object} o    Class definition
 		 * @return {Object}
 		 */
-		define: function(name, o) {
-			var me = this,
-				F = function(){ }, Cls,
-				parent;
+		define: function(name, api) {
+
+            if (api === undefined) {
+                api = name;
+                name = undefined;
+            } else if (_.isArray(name)) {
+                root = name[0];
+                name = name[1];
+            } else {
+                root = nano.scope;
+            }
+
+			var dummy = function(){}, cls, parent;
 			
 			// Class parent	
-			if (o.extend) {						
-				parent = typeof o.extend == 'string' ? me.getNamespace(o.extend) : o.extend;
+			if (api.$extend) {						
+				parent = typeof api.$extend == 'string' ? nano.namespace(api.$extend) : api.$extend;
+
+                // Parent not exists
+                if (parent.prototype === undefined) {
+                    parent = nano.Base;
+                    api.$extend = 'nano.Base';
+                }
 			} else {
-				parent = me.Base;
-				o.extend = 'nano.Base';
+				parent = nano.Base;
+				api.$extend = 'nano.Base';
 			}
 
 			// Custom constructor not defined
-			if (o.constructor == Object.prototype.constructor) {
+			if ( ! api.hasOwnProperty('constructor')) {
 				// Default constructor
-				Cls = function() {
+				cls = function() {
 					// Call parent constructor
-					this.superclass.constructor.apply(this, arguments);
+					parent.apply(this, arguments);
 				};
 			} else {
 				// Constructor defined by user
-				Cls = function() { o.constructor.apply(this, arguments); };
+				cls = function() { api.constructor.apply(this, arguments); };
 			}
 
-			F.prototype = parent.prototype;
-			Cls.prototype = new F();
+            // Create dummy function to not execute
+            // parent constructor
+            dummy.prototype = parent.prototype;
+			cls.prototype = new dummy();
 			
 			// Apply statics from parent
-			me.extend(Cls, parent);
+			_.extend(cls, parent);
 
 			// Apply statics from class definition
-			if (o.statics) {
-				me.extend(Cls, o.statics);
-				delete o.statics;
-			}
+            _.extend(cls, api.$statics || {});
 
 			// Apply user methods to prototype
-			me.extend(Cls.prototype, o);
+			_.extend(cls.prototype, api);
 
 			// Override construtctor
-			Cls.prototype.constructor = Cls;
-			Cls.prototype.className = name;
-			Cls.prototype.superclass = parent;
+            cls.prototype.constructor = cls;           
 
-			Cls.prototype.mixin = [];
+            if (name) {
+                cls.prototype.$className = name;
+            }
 
-			if (o.mixin) {
-				var mixin = o.mixin,
-					mixins = {},
-					alias;
-				delete o.mixin;
+			cls.prototype.$super = parent;
+			cls.prototype.$mixin = {};
 
-				// __mixin: 'some.Class'
-				if (typeof mixin == 'string') {
-					alias = mixin.split('.');
-					alias = alias[alias.length-1];
+			if (api.$mixin) {
 
-					mixins[alias] = { cls: me.getNamespace(mixin), methods: true };
-				} else {
+                if (typeof api.$mixin == 'string') {
+                    api.$mixin = [api.$mixin];
+                }
 
-					var item;
+                var mixin = api.$mixin,
+                    len = mixin.length,
+                    i = 0, className, methods;
 
-					for (alias in mixin) {
-						item = mixin[alias];
+                for (; i &lt; len; i++) {
+                    if (_.isArray[mixin[i]]) {
+                        className = mixin[i][0];
+                        methods = mixin[i].slice(1, mixin[i].length-1);
+                    } else {
+                        className = mixin[i];
+                        methods = undefined;
+                    }
 
-						if (typeof item == 'string') {
-							// Class to mixin
-							mixins[name] = { cls: me.getNamespace(item), methods: true };
-						} else {
-							mixins[name] = { cls: me.getNamespace(item.cls) };
-
-						if (item.methods !== undefined) {
-							mixins[name].methods = item.methods;
-						}
-					}
-				}
+                    cls.prototype.$mixin[_.isArray(className) ? className[0] : className] = !methods;
+                    nano.mixin(cls, nano.namespace(className), methods);
+                }
 			}
 
-			for (alias in mixins) {
-				me.mixin(Cls, alias, mixins[alias].cls, mixins[alias].methods);
-		        }
-	        }
-			
-			me.setNamespace(name, o.singleton ? new Cls() : Cls);
+            if (name) {
+                return nano.namespace([root, name], api.$singleton ? new cls : cls);    
+            } else {
+                return api.$singleton ? new cls : cls;
+            }
 		},
-		mixin: function(cls, alias, mixin, methods) {
-			cls = cls.prototype;
-			mixin = mixin.prototype;
-			methods = methods === true ? [] : methods;
-			
-			var	all = methods.length === 0,
+		mixin: function(cls, mixin, methods) {
+            var cls = cls.prototype,
+                mixin = mixin.prototype,
+                methods = methods || [],
+                all = methods.length === 0,
 				i;
 
 			for (i in mixin) {
@@ -269,23 +273,10 @@
 					cls[i] = mixin[i];
 				} 
 			}
-
-			cls.mixin[alias] = mixin;
-		}, // eo mixin
-<span id='Base-method-template'>		/**
-</span>		 * @inheritDoc nano.util.Template#create
-		 */
-		template: function(str, data) { return this.util.template.create(str, data); },
-<span id='Base-method-escape'>		/**
-</span>		 * Escape a string for HTML interpolation.
-		 * 
-		 * @param {String} string
-		 * @return {String}
-		 */ 
-		escape: function(string) {
-			return (''+string).replace(/&amp;/g, '&amp;amp;').replace(/&lt;/g, '&amp;lt;').replace(/&gt;/g, '&amp;gt;').replace(/&quot;/g, '&amp;quot;').replace(/'/g, '&amp;#x27;').replace(/\//g,'&amp;#x2F;');
-		} // eo escape
+		} // eo mixin
 	};
-})( (function() { return this; }).call() );</pre>
+
+    root.nano = nano;
+})( this, _, [][0] );</pre>
 </body>
 </html>

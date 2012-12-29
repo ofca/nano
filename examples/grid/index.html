@@ -1,0 +1,91 @@
+<!doctype HTML>
+<html>
+	<head>
+		<title>Grid</title>
+		<meta charset='utf8'>
+		<link href='../vendor/bootstrap/css/bootstrap.min.css' rel='stylesheet'>
+        <style>
+            body { margin: 40px; }
+            #grid { /*width: 800px; height: 200px; overflow-y: scroll;*/ }
+
+            .nano-grid-columnHeader { display: block; }
+
+                .nano-grid-columnSortable { cursor: pointer; }
+
+            .nano-grid-columnSettings { visibility: hidden; }
+            .nano-grid-columnHeader:hover .nano-grid-columnSettings { visibility: visible; }
+
+            .nano-grid-columnSortStatus { visibility: hidden; }
+            .nano-grid-columnSorted .nano-grid-columnSortStatus { visibility: visible; }
+            .nano-grid-columnSorted-asc .nano-grid-columnSortStatus { background-position: -313px -119px; }
+            .nano-grid-columnSorted-desc .nano-grid-columnSortStatus { background-position: -288px -120px; }
+
+        </style>
+	</head>
+	<body>
+		<div id='grid'></div>
+        <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js'></script>
+        <script src='../vendor/underscore-min.js'></script>
+        <script src='../../src/nano/nano.js'></script>
+        <script src='../../src/nano/string.js'></script>
+        <script src='../../src/nano/ui/Grid.js'></script>
+        <script src='../../src/nano/ui/grid/Column.js'></script>
+        <script src='../../src/nano/ui/grid/column/Action.js'></script>
+        <script src='../../src/nano/ui/grid/column/String.js'></script>
+        <script src='../../src/nano/ui/grid/column/Integer.js'></script>
+
+        <script>
+            var random = function (min, max) {
+                    return Math.floor(Math.random() * (max - min + 1)) + min;
+                },
+                data = [],
+                names = ['Tom', 'Kate', 'Patric', 'Adam', 'Amanda', 'Pati', 'John', 'Al', 'Carol', 'Kenny', 'Oi'],
+                countries = ['Poland', 'USA', 'Iraq', 'Germany', 'Japan', 'China', 'France', 'Ukraine', 'Canada'],
+                i = 0, len = 500;
+
+            for (; i < len; i++) {
+                data[i] = {
+                    id: i,
+                    name: names[random(0, names.length - 1)],
+                    country: countries[random(0, countries.length - 1)],
+                    average: random(0, 5000)
+                };
+            }
+
+            var grid = new nano.ui.Grid({
+                plugins: {
+                    'nano.ui.grid.plugin.Pagination': {
+                        pageNumber: 3,
+                        rowsPerPage: 5
+                    }
+                },
+                actions: {
+                    '.icon-minus-sign:click': function(el) {
+                        console.log('click from grid', arguments);
+                    }
+                },
+                renderTo: 'grid',
+                columns: [
+                    { text: 'Id', name: 'id', type: 'integer' },
+                    { text: 'Name', name: 'name' },
+                    { text: 'Country', name: 'country' },
+                    { text: 'Average', name: 'average', visible: false },
+                    { 
+                        text: 'Action', name: 'action', virtual: true, type: 'action',
+                        items: [{
+                            icon: 'icon-minus-sign',
+                            tooltip: 'Delete',
+                            handler: function() {
+console.log('click from column', arguments);
+                            }
+                        }]
+                    }
+                ],
+                //data: data,
+                loader: 'data.php'
+            });
+
+            grid.render();
+        </script>
+	</body>
+</html>
