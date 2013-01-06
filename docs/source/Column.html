@@ -15,7 +15,7 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">(function(root, nano, _, $) {
+  <pre class="prettyprint lang-js">(function(root, nano, _, $, undefined) {
 <span id='nano-ui-grid-Column'>    /**
 </span>     * Base column class.
      * 
@@ -33,18 +33,25 @@
             o = o || {};
 
             _.extend(this, {
+<span id='nano-ui-grid-Column-property-id'>                /**
+</span>                 * @property {String} id
+                 * Unique column id.
+                 * @readonly
+                 */
+                id: _.uniqueId(),
                 grid: null,
 <span id='nano-ui-grid-Column-property-text'>                /**
 </span>                 * @cfg {String} text Column name.
                  * @property
                  */
                 text: '',
-<span id='nano-ui-grid-Column-property-index'>                /**
+<span id='nano-ui-grid-Column-property-name'>                /**
 </span>                 * @cfg {String} index Column data index.
                  * @property
                  */
-                index: '',
+                name: '',
                 sortable: true,
+                sortAsc: true,
                 type: 'string',
                 display: true,
                 visible: true,
@@ -63,8 +70,44 @@
                 sortFunction: null
             }, o);
         },
-        sort: function(func) {
-            return _.sortBy(grid.data, func || this.sortFunction || this.index);
+        unmarkSorted: function() {
+            $('#gridHeader-'+this.id).removeClass('nano-grid-columnSorted');
+            return this;
+        },
+        sort: function(func, asc) {
+            asc = asc === undefined ? this.sortAsc : asc;
+
+            if (this.grid.sortedBy == this.name) {
+                asc = !asc;
+            }
+
+            this.grid.rendered &amp;&amp;
+                $('#gridHeader-' + this.id)
+                    .removeClass('nano-grid-columnSorted-' + (this.sortAsc ? 'asc' : 'desc'))
+                    .addClass('nano-grid-columnSorted nano-grid-columnSorted-' + (asc ? 'asc' : 'desc'));
+            
+
+            this.sortAsc = asc;
+
+            this.grid.data = 
+                _.sortBy(
+                    this.grid.data, 
+                    func || this.sortFunction || asc 
+                        ? this.name 
+                        : function(value, index, list) {
+                            value = value[this.name];
+                            if (this.type == 'integer') {
+                                return -parseInt(value);
+                            } else {
+                                return _.map(value.toLowerCase().split(''), function(letter) { 
+                                    return String.fromCharCode(-(letter.charCodeAt(0)));
+                                });
+                            }
+                        }, 
+                    this
+                );
+
+            return this;
         },
 <span id='nano-ui-grid-Column-method-isVisible'>        /**
 </span>         * Return true if column is visible for user.
@@ -74,12 +117,31 @@
             return ! ( ! this.display || ! this.visible);
         },
         renderHeaderCell: function() {
-            return '&lt;th&gt;' + this.text + '&lt;/th&gt;';
+            var css = 'nano-grid-columnHeader';
+
+            if (this.grid.sortedBy.indexOf(this.name) != -1) {
+                css += ' nano-grid-columnSorted nano-grid-columnSorted-' + (this.sortAsc ? 'asc' : 'desc');
+            }
+
+            if (this.sortable) {
+                css += ' nano-grid-columnSortable';
+            }
+
+            var html = '&lt;th&gt;&lt;div id=&quot;gridHeader-'+this.id+'&quot; class=&quot;'+css+'&quot;';
+
+            html += ' data-column-name=&quot;' + this.name + '&quot;&gt;';
+
+            html += this.text;
+            html += ' &lt;span class=&quot;nano-grid-columnSortStatus icon-chevron-down&quot;&gt;&lt;/span&gt;';
+            html += '&lt;a class=&quot;nano-grid-columnSettings icon-cog pull-right&quot;&gt;&lt;/a&gt;';
+            html +=' &lt;/div&gt;&lt;/th&gt;';
+
+            return html;
         },
         renderCell: function(value, data, cellIndex, rowIndex) {
             return '&lt;td&gt;' + value + '&lt;/td&gt;';
         }
     });
-})(this, this.nano, this._, this.jQuery);</pre>
+})(this, this.nano, this._, this.jQuery, [][0]);</pre>
 </body>
 </html>

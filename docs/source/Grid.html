@@ -25,31 +25,51 @@
      * @class    nano.ui.Grid
      * @extends  nano.Base
      * @author   ofca &lt;ofca@emve.org&gt;
+     * @uses     nano.ui.grid.Column
+     * @uses     nano.ui.grid.column.String
      */
     nano.define('nano.ui.Grid', {
-<span id='nano-ui-Grid-method-constructor'>        /**
-</span>         * Constructor.
-         *
-         *     @example
-         *     var grid = new nano.ui.Grid({
-         *         appendTo: 'grid'
-         *     });
-         * 
-         * @param  {Object} o Configuration.
-         * @constructor
-         */
-        constructor: function(o) {
-            o = o || {};
-
-            _.extend(this, {
-<span id='nano-ui-Grid-cfg-template'>                /**
-</span>                 * @cfg {String} template
+        $uses: [
+            'nano.ui.grid.Column',
+            'nano.ui.grid.column.String'
+        ],
+        $configs: [
+<span id='nano-ui-Grid-cfg-template'>            /**
+</span>             * @cfg {String} template
+             * Grid html template.
+             */
+            'template',
+<span id='nano-ui-Grid-cfg-columns'>            /**                 
+</span>             * @cfg {Array} columns 
+             * Grid columns definition.
+             */
+            'columns',            
+<span id='nano-ui-Grid-cfg-sortLocal'>            /**
+</span>             * @cfg {Boolean} sortLocal
+             * Flag indicating whether sorting should be done
+             * in browser or on the server.
+             * If loader is defined default value is false,
+             * otherwise true.
+             *
+             * If sortLocal is false then to loading data
+             * request are attached two variables:
+             * 
+             * *  sortby=columnName
+             * *  sorttype=asc-or-desc
+             */
+            'sortLocal'
+        ],
+        $properties: function() {
+            return {
+<span id='nano-ui-Grid-property-template'>                /**
+</span>                 * @property {String} template
                  * Grid html template.
                  */
                 template: '&lt;table class=&quot;{{css}}&quot;&gt;&lt;/table&gt;',
-<span id='nano-ui-Grid-cfg-columns'>                /**                 
-</span>                 * @cfg {Array} columns 
+<span id='nano-ui-Grid-property-columns'>                /**                 
+</span>                 * @property {Array} columns 
                  * Grid columns definition.
+                 * @readonly
                  */
                 columns: [],
 <span id='nano-ui-Grid-cfg-data'>                /**
@@ -67,31 +87,89 @@
                  * Css classes applied to table dom element.
                  */
                 css: ['table'],
+<span id='nano-ui-Grid-property-localData'>                /**
+</span>                 * @property {Boolean} localData
+                 * If false, data is loaded async.
+                 * @readonly
+                 */
+                localData: true,
+<span id='nano-ui-Grid-property-sortLocal'>                /**
+</span>                 * @property {Boolean} sortLocal
+                 * Flag indicating whether sorting should be done
+                 * in browser or on the server.
+                 * If loader is defined default value is false,
+                 * otherwise true.
+                 *
+                 * If sortLocal is false then to loading data
+                 * request are attached two variables:
+                 * 
+                 * *  sortby=columnName
+                 * *  sorttype=asc-or-desc
+                 */
+                sortLocal: false,
+<span id='nano-ui-Grid-property-loader'>                /**
+</span>                 * @cfg {Function/String} loader Function which will load data.
+                 * @property {Function/String} loader
+                 * Function which will load data.
+                 * @readonly
+                 */
+                loader: null,
 <span id='nano-ui-Grid-property-dom'>                /**
 </span>                 * @property {Object} dom 
                  * Handles link to HTMLElements.
                  * @property {Object} dom.table Handler to table HTMLElement. Available after nano.ui.Grid.render() executed.
                  * @readonly
                  */
-                dom: {}
-            });
+                dom: {},
+<span id='nano-ui-Grid-property-sortedBy'>                /**
+</span>                 * @property {String} sortedBy
+                 * Name of the column by which grid is sorted.
+                 * @readonly
+                 */
+                sortedBy: null,
+<span id='nano-ui-Grid-property-rendered'>                /**
+</span>                 * @property {Boolean} rendered True if grid is rendered.
+                 * @readonly
+                 */
+                rendered: false
+            }
+        },
+<span id='nano-ui-Grid-method-constructor'>        /**
+</span>         * Constructor.
+         *
+         *     @example
+         *     var grid = new nano.ui.Grid({
+         *         appendTo: 'grid'
+         *     });
+         * 
+         * @param  {Object} o Configuration.
+         * @constructor
+         */
+        constructor: function(o) {
+            this.$super.prototype.constructor.call(this, o);
 
-            if (o.renderTo) {
-                this.setRenderTo(o.renderTo);
-                delete o.renderTo;
+            if (o.sortBy) {
+                this.sortBy(sortBy);
+            }
+        },
+        setLoader: function(o) {
+            var me = this;
+
+            if (_.isFunction(o)) {
+                this.loader = o;
+            } else if (_.isString(o)) {
+                nano.ajax({
+                    url: o,
+                    method: 'get',
+                    dataType: 'json',
+                    complete: function(data) {
+                        me.data = data;
+                        me.renderRows();
+                    }
+                });
             }
 
-            if (o.columns) {
-                this.setColumns(o.columns);
-                delete o.columns;
-            }
-
-            if (o.on) {
-                this.addActions(o.on);
-                delete o.on;
-            }
-
-            _.extend(this, o);
+            return this;
         },
         addActions: function(o) {
             _.map(o, function(v, k) { this.addAction(k, v); }, this); 
@@ -124,13 +202,16 @@
             // Capitalize first char
             type = type.charAt(0).toUpperCase() + type.slice(1);
 
-            if ( ! nano.ui.grid.column[type]) {
-                throw new Error('nano.ui.Grid: Column ' + type + ' does not exists');
-            }
-
             o.grid = this;
 
-            this.columns.push( new nano.ui.grid.column[type](o) );
+            var column = nano.create('nano.ui.grid.column.'+type, o);
+
+            this.columns.push(column);
+
+            // Sorting is not set yet
+            if ( ! this.sortedBy &amp;&amp; column.sortable) {
+                this.sortedBy = column.name;
+            }
         },
         setColumns: function(columns) {
             var i = 0, len = columns.length;
@@ -147,6 +228,8 @@
             this.dom.table = this.renderTo.getElementsByTagName('table')[0];
             this.renderHeaders();
             this.renderRows();
+
+            this.rendered = true;
         },
         renderHeaders: function() {
             var html = [],
@@ -179,6 +262,11 @@
                     ? table.insertBefore(el, table.firstChild)
                     : table.appendChild(el);
             }
+
+            this.addAction('.nano-grid-columnHeader:click', function(el, e) {
+                var name = el.getAttribute('data-column-name');
+                this.sortBy(name);
+            });
         },
         renderRows: function() {
             var me = this,
@@ -231,17 +319,19 @@
                     continue;
                 }
 
-                html[i] = col.renderCell(col.virtual ? null : data[col.index], data, i, rowIndex);
+                html[i] = col.renderCell(col.virtual ? null : data[col.name], data, i, rowIndex);
             }
 
             return '&lt;tr&gt;' + html.join('') + '&lt;/tr&gt;';
         },
-        getColumn: function(index) {
+        getColumnBy: function(key, value) {
             var i = 0, list = this.columns, len = list.length;
 
             for (; i &lt; len; i++) {
-                if (list[i]['index'] == index) return list[i];
+                if (list[i][key] == value) return list[i];
             }
+
+            return false;
         },
 <span id='nano-ui-Grid-method-sortBy'>        /**
 </span>         * Sort grid by column.
@@ -252,9 +342,22 @@
          * @chainable
          * @method
          */
-        sortBy: function(column, func) {
-            this.data = this.getColumn(column).sort(func);
-            this.renderRows();
+        sortBy: function(column, func, asc) {            
+            var column = this.getColumnBy('name', column);
+
+            if ( ! column) { return; }
+
+            if (column.name != this.sortedBy) {
+                this.getColumnBy('name', this.sortedBy).unmarkSorted();
+            }
+
+            column.sort(func, asc);
+            
+            this.sortedBy = column.name;
+
+            this.rendered &amp;&amp; this.renderRows();
+
+            return this;
         }
     });
 

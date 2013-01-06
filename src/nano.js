@@ -1,28 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title>The source code</title>
-  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
-  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
-  <style type="text/css">
-    .highlight { display: block; background-color: #ddd; }
-  </style>
-  <script type="text/javascript">
-    function highlight() {
-      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
-    }
-  </script>
-</head>
-<body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">(function(root, _, undefined){
+(function(root, _, undefined){
 
 	'use strict';
 
     var noop = function() {};
 
     // Avoid `console` errors in browsers that lack a console.
-    if ( ! root.console &amp;&amp; ! root.console.log) {  
+    if ( ! root.console && ! root.console.log) {  
         var methods = ['assert', 'clear', 'count', 'debug', 'dir', 'dirxml', 'error', 'exception', 'group', 'groupCollapsed', 'groupEnd', 'info', 'log', 'markTimeline', 'profile', 'profileEnd', 'markTimeline', 'table', 'time', 'timeEnd', 'timeStamp', 'trace', 'warn'],
             len = methods.length,
             csl = root.console = {};
@@ -36,13 +19,13 @@
         // Array Remove - By John Resig (MIT Licensed)
         Array.prototype.remove = function(from, to) {
             var rest = this.slice((to || from) + 1 || this.length);
-            this.length = from &lt; 0 ? this.length + from : from;
+            this.length = from < 0 ? this.length + from : from;
             return this.push.apply(this, rest);
         };
     }
 
-<span id='nano-Base'>    /**
-</span>     * Base class.
+    /**
+     * Base class.
      * 
      * @class nano.Base
      * @extends Object
@@ -52,8 +35,8 @@
         return Object.prototype.hasOwnProperty.call(obj, name);
     };
 
-<span id='nano-Base-method-constructor'><span id='nano-Base'>    /**
-</span></span>     * Base nano class, all classes created by nano.define
+    /**
+     * Base nano class, all classes created by nano.define
      * extends this class.
      * 
      * @class nano.Base
@@ -66,20 +49,40 @@
         this.$setProperties();
         this.$applyConfigs(o);
     };
-    Base.prototype.$setProperties = function() { return _.extend(this, this.$properties &amp;&amp; this.$properties()); };
+    Base.prototype.$setProperties = function() { 
+        return _.extend(this, this.$properties && this.$properties()); 
+    };
     Base.prototype.$applyConfigs = function(o) {
-        var key, setter;
+        var key, 
+            cfg = this.$configs,
+            apply = function(value, key, list) {
+                var setter = 'set' + key.charAt(0).toUpperCase() + key.substr(1);
 
-        for (key in o) {
-            setter = 'set' + key.charAt(0).toUpperCase() + key.substr(1);
-            if (typeof this[setter] == 'function') {
-                this[setter].call(this, o[key]);
-                delete o[key];
-            } else {
-                if (typeof this[key] != 'function') {
-                    this[key] = o[key];
-                    delete o[key];
+                if (typeof this[setter] == 'function') {
+                    this[setter].call(this, value);
+                    delete list[key];
+                } else {
+                    if (typeof this[key] != 'function') {
+                        this[key] = value;
+                        delete list[key];
+                    }
                 }
+            };
+
+        if (cfg === true) {
+            _.each(o, apply, this);
+        } else {
+            var i = 0, len = cfg.length;
+
+            for (; i < len; i++) {
+                key = cfg[i];
+
+                // This config is required
+                if (key[0] == '!' && o[key] === undefined) {
+                    throw new Error('Class ' + this.$className + ' requires config "' + key.slice(1) + '" to instantiate.');
+                }
+
+                apply.call(this, o[key], key, o);
             }
         }
 
@@ -123,7 +126,7 @@
                                 //var nano = this.nano;
                                 eval(data);
                             } catch(e) {
-                                var err = e.constructor('Error in evaled script: ' + e.message + &quot;\n&quot; + e.stack);
+                                var err = e.constructor('Error in evaled script: ' + e.message + "\n" + e.stack);
                                 throw err;
                             }
                         }).call(nano.scope) );
@@ -154,7 +157,7 @@
                     len = ns.length,
                     i = 0;
 
-                for (; i &lt; len; i++) {
+                for (; i < len; i++) {
                     if ( ! root[ ns[i] ]) { break; }
                     root = root[ ns[i] ];
                 }
@@ -166,7 +169,7 @@
             });
 
             // Start loading if is not in progress
-            if ( ! me.isLoading &amp;&amp; me.quene.length != 0) {
+            if ( ! me.isLoading && me.quene.length != 0) {
                 
                 me.isLoading = true;
 
@@ -220,27 +223,27 @@
         };
     };
     
-<span id='nano-console'>    /**
-</span>     * Alias for window.console object.
+    /**
+     * Alias for window.console object.
      * 
      * @class nano.console
      * @extends Object
      * @singleton
      */
-<span id='nano-console-method-log'>    /**
-</span>     * Alias method for window.console.log.
+    /**
+     * Alias method for window.console.log.
      * @method log
      */
-<span id='nano-console-method-warn'>    /**
-</span>     * Alias method for window.console.warn (if not exists window.console.log will be used).
+    /**
+     * Alias method for window.console.warn (if not exists window.console.log will be used).
      * @method warn
      */
-<span id='nano-console-method-info'>    /**
-</span>     * Alias method for window.console.info (if not exists window.console.log will be used).
+    /**
+     * Alias method for window.console.info (if not exists window.console.log will be used).
      * @method info
      */
-<span id='nano-console-method-debug'>    /**
-</span>     * Alias method for window.console.debug (if not exists window.console.log will be used).
+    /**
+     * Alias method for window.console.debug (if not exists window.console.log will be used).
      * @method debug
      */
     nano.console = (function() {
@@ -250,16 +253,16 @@
         return new fn;
     })();
 
-<span id='nano'>	/**
-</span>	 * nano core.
+	/**
+	 * nano core.
 	 * 
 	 * @class nano
 	 * @singleton
      * @requires _
 	 */
 	_.extend(nano, {
-<span id='nano-property-scope'>        /**
-</span>         * @property {Object} scope
+        /**
+         * @property {Object} scope
          * Shortcut to global object (in browser it will be window). All classes
          * are defined on this object.
          *
@@ -272,8 +275,8 @@
          *     window.foo.bar
          */
 		scope: root,
-<span id='nano-property-noop'>        /**
-</span>         * @property {Function} noop
+        /**
+         * @property {Function} noop
          * Dummy function.
          */
         noop: noop,
@@ -281,23 +284,23 @@
         Base: Base,
         classMap: {},
         loadedClasses: [],
-<span id='nano-property-autoload'>        /**
-</span>         * @property {Boolean} autoload 
+        /**
+         * @property {Boolean} autoload 
          * Flag indicating whether missing classes should be loaded or not.
          */
         autoload: false,
-<span id='nano-method-call'>        /**
-</span>         * This is special version of Function.apply.
+        /**
+         * This is special version of Function.apply.
          *
          *     function hello(name, lastname) {
          *         return 'Hello ' + name + (lastname ? ' ' + lastname : '');
          *     };
          *     
-         *     nano.call(hello, 'Joe'); // result will be &quot;Hello Joe&quot;;
+         *     nano.call(hello, 'Joe'); // result will be "Hello Joe";
          *
          *     // If you need to pass more then one param then second
          *     // parameter must be an Array
-         *     nano.call(hello, ['Joe', 'Kowalski']); // result will be &quot;Hello Joe Kowalski&quot;;
+         *     nano.call(hello, ['Joe', 'Kowalski']); // result will be "Hello Joe Kowalski";
          *
          *     // You can call this function on custom scope:
          *     nano.call([hello, scope], 'Joe');
@@ -309,24 +312,24 @@
          */
         call: function(o, params) {
             params = _.isArray(params) ? params: [params];
-            return _.isArray(o) ? o[0].apply(o[1], o.length &gt; 2 ? params.concat(o.slice(2)) : params) : (_.isFunction(o) ? o.apply(null, params) : null);
+            return _.isArray(o) ? o[0].apply(o[1], o.length > 2 ? params.concat(o.slice(2)) : params) : (_.isFunction(o) ? o.apply(null, params) : null);
         },
-<span id='nano-method-encodeURI'>        /**
-</span>         * Translate Object to uri params.
+        /**
+         * Translate Object to uri params.
          *
          *     nano.encodeURI({ foo: 'bar', bar: 'foo' });
-         *     // return: foo=bar&amp;bar=foo
+         *     // return: foo=bar&bar=foo
          * 
          * @param  {Object} o
          * @return {String}
          */
         encodeURI: function(o) {
             return _.map(o, function(v, k) { 
-                encodeURIComponent(k) + &quot;=&quot; + encodeURIComponent(v) 
-            }).join('&amp;');
+                encodeURIComponent(k) + "=" + encodeURIComponent(v) 
+            }).join('&');
         },
-<span id='nano-method-ajax'>        /**
-</span>         * Simple ajax method.
+        /**
+         * Simple ajax method.
          *
          *     var xhr = nano.ajax({
          *        url: 'foo.php',
@@ -371,26 +374,26 @@
             _.each(o.headers, function(v, k) { xhr.setRequestHeader(k, v); });
 
             xhr.onreadystatechange = function() {
-                o.onReadyStateChange &amp;&amp; nano.call(o.onReadyStateChange, [xhr]);
+                o.onReadyStateChange && nano.call(o.onReadyStateChange, [xhr]);
 
                 if (xhr.readyState == 4) {
                     var data = xhr.responseText;
 
                     switch (o.dataType) {
                         case 'json':
-                            data = JSON &amp;&amp; JSON.parse(data) || eval(data);
+                            data = JSON && JSON.parse(data) || eval(data);
                             break;
                     }
 
-                    o.complete &amp;&amp; nano.call(o.complete, [data, xhr]);
+                    o.complete && nano.call(o.complete, [data, xhr]);
                 }
             };
             xhr.send(typeof o.params == 'string' ? o.params : nano.encodeURI(o.params));
 
             return xhr;
         },
-<span id='nano-method-require'>        /**
-</span>         * Loads required class.
+        /**
+         * Loads required class.
          *    
          * @param  {String} cls Class name
          * @param  {Function} callback Optional. Function to call after class is loaded.
@@ -408,21 +411,21 @@
         },
         getLoadedClassesAsString: function() {
             
-            var classes = _.map(nano.loadedClasses, function(v) { return &quot;'&quot; + v + &quot;'&quot;; }).join(&quot;,\n&quot;);
+            var classes = _.map(nano.loadedClasses, function(v) { return "'" + v + "'"; }).join(",\n");
 
-            var html = '&lt;div style=&quot;position: absolute; z-index: 9999; width: 500px; height: 300px; padding: 20px; background: #333; border-radius: 10px 10px 0 0; bottom: 0; left: 50%; margin-left: -250px;&quot;&gt;&lt;textarea style=&quot;background: #333; border: 0; color: #fff; width: 480px; height: 300px; outline: 0px;&quot;&gt;'+classes+'&lt;/textarea&gt;&lt;/div&gt;',
+            var html = '<div style="position: absolute; z-index: 9999; width: 500px; height: 300px; padding: 20px; background: #333; border-radius: 10px 10px 0 0; bottom: 0; left: 50%; margin-left: -250px;"><textarea style="background: #333; border: 0; color: #fff; width: 480px; height: 300px; outline: 0px;">'+classes+'</textarea></div>',
                 div = document.createElement('div');
 
             div.innerHTML = html;
 
             document.body.appendChild(div);
         },
-<span id='nano-method-tmpl'>        /**
-</span>         * Template function. It use _.template method but
+        /**
+         * Template function. It use _.template method but
          * with Twig syntax, so instead of:
-         * * &lt;% %&gt; is {% %}
-         * * &lt;%= %&gt; is {{ }}
-         * * &lt;%- %&gt; is {{- }}
+         * * <% %> is {% %}
+         * * <%= %> is {{ }}
+         * * <%- %> is {{- }}
          * 
          * @param  {String} text
          * @param  {Object} data
@@ -435,8 +438,8 @@
                 escape      : /\{\{\-([\s\S]+?)\}\}/g
             });
         },
-<span id='nano-method-namespace'>		/**
-</span>		 * Create namespace.
+		/**
+		 * Create namespace.
          *
          * If namespace exists, it will be just returned.
          * 
@@ -473,7 +476,7 @@
                 last = ns[lastIdx],
                 part, i = 0;
 
-            for (; i &lt; len; i++) {
+            for (; i < len; i++) {
                 part = ns[i];
 
                 // Last element
@@ -511,7 +514,7 @@
                 len = ns.length,
                 i = 0, found = true;
 
-            for (; i &lt; len; i++) {
+            for (; i < len; i++) {
                 if ( ! root[ ns[i] ]) { found = false; break; }
                 root = root[ ns[i] ];
             }
@@ -522,10 +525,10 @@
             cls = nano.getNamaspace(cls);
 
             // _.isObject too becaouse class may be singleton.
-            return cls &amp;&amp; (_.isFunction(cls) || _.isObject(cls)) ? cls : false;
+            return cls && (_.isFunction(cls) || _.isObject(cls)) ? cls : false;
         },
-<span id='nano-method-create'>        /**
-</span>         * Creates instance of class. If class is not loaded,
+        /**
+         * Creates instance of class. If class is not loaded,
          * and autoloader is on, class will be loaded dynamically.
          * 
          * @param  {String} ns Class name to create instance of.
@@ -554,8 +557,8 @@
             // It could be singleton so check first
             return _.isFunction(cls) ? new cls(o || {}) : cls;
         },
-<span id='nano-method-define'>		/**
-</span>		 * Define new class.
+		/**
+		 * Define new class.
 		 * 
 		 *     @example
 		 *     nano.define('my.new.SillyClass', {
@@ -688,7 +691,7 @@
                     len = mixin.length,
                     i = 0, className, methods;
 
-                for (; i &lt; len; i++) {
+                for (; i < len; i++) {
                     if (_.isArray[mixin[i]]) {
                         className = mixin[i][0];
                         methods = mixin[i].slice(1, mixin[i].length-1);
@@ -716,8 +719,8 @@
 				i;
 
 			for (i in mixin) {
-				if (mixin.hasOwnProperty(i) &amp;&amp; cls[i] === undefined) { 
-					if ( ! all &amp;&amp; methods.indexOf(i) == -1) { 
+				if (mixin.hasOwnProperty(i) && cls[i] === undefined) { 
+					if ( ! all && methods.indexOf(i) == -1) { 
 						continue;
 					}
 
@@ -726,6 +729,4 @@
 			}
 		} // eo mixin
 	});
-}).call(this, this, _, [][0]);</pre>
-</body>
-</html>
+}).call(this, this, _, [][0]);

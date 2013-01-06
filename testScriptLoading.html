@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+    <head></head>
+    <body>
+        <script>
+            console.log('hello');
+            /*var s = document.createElement('script');
+            s.type = 'text/javascript';
+            //s.async = false;
+            s.src = 'script.php';
+            var x = document.getElementsByTagName('body')[0];
+            x.appendChild(s);*/
+
+            xhr = new XMLHttpRequest();
+            xhr.open('GET', 'script.php', false);
+            xhr.send(null);
+            console.log(xhr.status);
+
+            console.log('hello again');
+        </script>
+    </body>
+</html>

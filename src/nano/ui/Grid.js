@@ -8,8 +8,14 @@
      * @class    nano.ui.Grid
      * @extends  nano.Base
      * @author   ofca <ofca@emve.org>
+     * @uses     nano.ui.grid.Column
+     * @uses     nano.ui.grid.column.String
      */
     nano.define('nano.ui.Grid', {
+        $uses: [
+            'nano.ui.grid.Column',
+            'nano.ui.grid.column.String'
+        ],
         $configs: [
             /**
              * @cfg {String} template
@@ -20,7 +26,25 @@
              * @cfg {Array} columns 
              * Grid columns definition.
              */
-            'columns'
+            'columns',            
+            /**
+             * @cfg {Boolean} sortLocal
+             * Flag indicating whether sorting should be done
+             * in browser or on the server.
+             * If loader is defined default value is false,
+             * otherwise true.
+             *
+             * If sortLocal is false then to loading data
+             * request are attached two variables:
+             * 
+             * *  sortby=columnName
+             * *  sorttype=asc-or-desc
+             */
+            'sortLocal',
+            /**
+             * @cfg {Function/String} loader Function which will load data.
+             */
+            'loader'
         ],
         $properties: function() {
             return {
@@ -57,8 +81,19 @@
                  */
                 localData: true,
                 /**
-                 * @cfg {Function/String} loader Function which will load data.
+                 * @property {Boolean} sortLocal
+                 * Flag indicating whether sorting should be done
+                 * in browser or on the server.
+                 * If loader is defined default value is false,
+                 * otherwise true.
+                 *
+                 * If sortLocal is false then to loading data
+                 * request are attached two variables:
+                 * 
+                 * *  sortby=columnName
+                 * *  sorttype=asc-or-desc
                  */
+                sortLocal: false,
                 /**
                  * @property {Function/String} loader
                  * Function which will load data.
@@ -109,16 +144,13 @@
             if (_.isFunction(o)) {
                 this.loader = o;
             } else if (_.isString(o)) {
-                $.ajax({
+                nano.ajax({
                     url: o,
                     method: 'get',
                     dataType: 'json',
-                    success: function(data) {
+                    complete: function(data) {
                         me.data = data;
                         me.renderRows();
-                    },
-                    error: function() {
-
                     }
                 });
             }
@@ -156,13 +188,9 @@
             // Capitalize first char
             type = type.charAt(0).toUpperCase() + type.slice(1);
 
-            if ( ! nano.ui.grid.column[type]) {
-                throw new Error('nano.ui.Grid: Column ' + type + ' does not exists');
-            }
-
             o.grid = this;
 
-            var column = new nano.ui.grid.column[type](o);
+            var column = nano.create('nano.ui.grid.column.'+type, o);
 
             this.columns.push(column);
 

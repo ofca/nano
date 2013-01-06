@@ -1,0 +1,7 @@
+{
+    "--output": "docs",
+    "--builtin-classes": true,
+    "--": ["src/"],
+    "--title": "nano docs",
+    "--external": "_,XMLHttpRequest,ActiveXObject"
+}
