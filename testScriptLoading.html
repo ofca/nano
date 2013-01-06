@@ -4,6 +4,20 @@
     <body>
         <script>
             console.log('hello');
+
+            var s = document.createElement('script');
+            s.type = 'text/javascript';
+            s.onload = function() {
+                console.log('load', this);
+            };
+            s.onreadystatechange = function() {
+                console.log('read', this);
+            }
+            s.src = 'foo.js';
+            var x = document.getElementsByTagName('body')[0];
+            x.appendChild(s);
+
+
             /*var s = document.createElement('script');
             s.type = 'text/javascript';
             //s.async = false;
@@ -11,12 +25,12 @@
             var x = document.getElementsByTagName('body')[0];
             x.appendChild(s);*/
 
-            xhr = new XMLHttpRequest();
+            /*xhr = new XMLHttpRequest();
             xhr.open('GET', 'script.php', false);
             xhr.send(null);
             console.log(xhr.status);
 
-            console.log('hello again');
+            console.log('hello again');*/
         </script>
     </body>
 </html>

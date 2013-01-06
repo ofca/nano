@@ -134,6 +134,15 @@
                         nano.call(callback, [url]);
                     }
                 });
+            } else {
+                var s = root.document.createElement('script');
+
+                s.type = 'text/javascript';
+                s.onload = function() {
+                    callback();
+                };
+                s.src = url;
+                root.document.body.appendChild(s);
             }
 
             return this;
@@ -169,7 +178,7 @@
             });
 
             // Start loading if is not in progress
-            if ( ! me.isLoading && me.quene.length != 0) {
+            if ( ! me.isLoading && me.quene.length) {
                 
                 me.isLoading = true;
 
@@ -182,41 +191,16 @@
                     } else {
                         me.isLoading = false;
 
-                        var callbacks = me.callbacks;
-                        me.callbacks = [];
+                        // Clone array with callbacks
+                        var callbacks = me.callbacks.slice(0);
+                        // Reset callbacks array
+                        me.callbacks.length = 0;
 
                         _.map(callbacks, nano.call);                        
                     }
                 }
 
                 loader();
-
-                /*_.each(me.quene, function(v, k) {
-                    me.load(v, function() {
-                        me.quene.remove(k);
-                    });
-                });
-
-                var idx = 0,
-                    loader = function(url, idx) {
-                        me.load(url, function() {
-                            me.quene.remove(idx);
-                        });
-
-                        idx++;
-                        if (me.quene[idx]) {
-                            loader(me.quene[idx], idx);
-                        } else {
-                            me.isLoading = false;
-
-                            var callbacks = me.callbacks;
-                            me.callbacks = [];
-
-                            _.map(callbacks, nano.call);   
-                        }
-                    };
-
-                loader(0);*/
             }
 
             return this;

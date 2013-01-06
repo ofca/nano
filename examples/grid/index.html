@@ -37,13 +37,17 @@
         <script>
 
             nano.Loader
-                .autoload(true)
+                .autoload(false)
                 .setBasePath('../../src/')
                 .require([
+                    'nano.ui.grid.Column',
+                    'nano.ui.grid.column.String',
+                    'nano.ui.grid.column.Integer',
+                    'nano.ui.grid.column.Action',
                     'nano.ui.Grid'
                 ], bootstrap);
 
-            function bootstrap() {
+            function bootstrap() { console.log('bootstrap');
                 var random = function (min, max) {
                         return Math.floor(Math.random() * (max - min + 1)) + min;
                     },

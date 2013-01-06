@@ -18,15 +18,20 @@
         ],
         $configs: [
             /**
-             * @cfg {String} template
-             * Grid html template.
+             * @cfg {HTMLElement/String} appendTo
+             * DOMElement to render grid.
              */
-            'template',
+            '!appendTo',
             /**                 
              * @cfg {Array} columns 
              * Grid columns definition.
              */
-            'columns',            
+            '!columns',
+            /**
+             * @cfg {String} template
+             * Grid html template.
+             */
+            'template', 
             /**
              * @cfg {Boolean} sortLocal
              * Flag indicating whether sorting should be done
@@ -44,13 +49,28 @@
             /**
              * @cfg {Function/String} loader Function which will load data.
              */
-            'loader'
+            'loader',
+            /**
+             * @cfg {Array} data
+             * Data to display.
+             */
+            'data',
+            /**
+             * @cfg {Array} css
+             * Css classes applied to table dom element.
+             */
+            'css',
+            /**
+             * @cfg {String} sortBy 
+             * Name of the column to sort by.
+             */
+            'sortBy'
         ],
         $properties: function() {
             return {
                 /**
                  * @property {String} template
-                 * Grid html template.
+                 * Grid html template. Call render after changing value of this property.
                  */
                 template: '<table class="{{css}}"></table>',
                 /**                 
@@ -60,17 +80,18 @@
                  */
                 columns: [],
                 /**
-                 * @cfg {Array} data
+                 * @property {Array} data
                  * Data to display.
+                 * @readonly
                  */
                 data: [],
                 /**
-                 * @cfg {HTMLElement/String} appendTo
+                 * @property {HTMLElement/String} appendTo
                  * DOMElement to render grid.
                  */
                 appendTo: null,
                 /**
-                 * @cfg {Array} css
+                 * @property {Array} css
                  * Css classes applied to table dom element.
                  */
                 css: ['table'],
